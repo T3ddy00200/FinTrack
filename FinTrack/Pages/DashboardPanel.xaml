@@ -1,0 +1,83 @@
+﻿<UserControl x:Class="FinTrack.Controls.DashboardPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Loaded="UserControl_Loaded"
+             Background="{DynamicResource BackgroundBrush}">
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Главная панель"
+                   FontSize="24"
+                   FontWeight="Bold"
+                   Foreground="{DynamicResource TextBrush}"
+                   Margin="0,0,0,20"/>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="3*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Общая сумма долгов -->
+            <Border Background="{DynamicResource PanelBackgroundBrush}"
+                    CornerRadius="10"
+                    Padding="15"
+                    Grid.Column="0"
+                    Margin="0,0,10,0">
+                <StackPanel>
+                    <TextBlock Text="Общая сумма долгов"
+                               FontWeight="Bold"
+                               FontSize="16"
+                               Foreground="{DynamicResource TextBrush}"/>
+                    <TextBlock Text="{Binding TotalDebt, StringFormat={}{0:N0} ₽}"
+                               FontSize="24"
+                               Margin="0,10,0,0"
+                               Foreground="{DynamicResource TextBrush}"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Количество открытых инвойсов -->
+            <Border Background="{DynamicResource PanelBackgroundBrush}"
+                    CornerRadius="10"
+                    Padding="15"
+                    Grid.Column="1"
+                    Margin="0,0,10,0">
+                <StackPanel>
+                    <TextBlock Text="Открытые Задолженности"
+                               FontWeight="Bold"
+                               FontSize="16"
+                               Foreground="{DynamicResource TextBrush}"/>
+                    <TextBlock Text="{Binding OpenInvoices}"
+                               FontSize="24"
+                               Margin="0,10,0,0"
+                               Foreground="{DynamicResource TextBrush}"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Последние уведомления -->
+            <Border Background="{DynamicResource PanelBackgroundBrush}"
+                    CornerRadius="10"
+                    Padding="15"
+                    Grid.Column="2">
+                <StackPanel>
+                    <TextBlock Text="Последние уведомления"
+                               FontWeight="Bold"
+                               FontSize="16"
+                               Foreground="{DynamicResource TextBrush}"/>
+                    <ItemsControl ItemsSource="{Binding RecentNotifications}" Margin="0,10,0,0">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="• {Binding}" Foreground="{DynamicResource TextBrush}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

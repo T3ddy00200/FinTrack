@@ -1,0 +1,30 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Цвета -->
+    <Color x:Key="BackgroundColor">#FFFFFF</Color>
+    <Color x:Key="PanelBackgroundColor">#F3F4F6</Color>
+    <Color x:Key="TextColor">#111827</Color>
+    <Color x:Key="SubTextColor">#4B5563</Color>
+    <Color x:Key="AccentColor">#2563EB</Color>
+    <Color x:Key="DangerColor">#B91C1C</Color>
+    <Color x:Key="HoverColor">#E5E7EB</Color>
+    <Color x:Key="HeaderColor">#E5E7EB</Color>
+    <Color x:Key="BorderColor">#D1D5DB</Color>
+
+    <!-- Кисти -->
+    <SolidColorBrush x:Key="HighlightBrush" Color="#3B82F6" />
+    <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource BackgroundColor}" />
+    <SolidColorBrush x:Key="PanelBackgroundBrush" Color="{StaticResource PanelBackgroundColor}" />
+    <SolidColorBrush x:Key="TextBrush" Color="{StaticResource TextColor}" />
+    <SolidColorBrush x:Key="SubTextBrush" Color="{StaticResource SubTextColor}" />
+    <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
+    <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerColor}" />
+    <SolidColorBrush x:Key="HoverBrush" Color="{StaticResource HoverColor}" />
+    <SolidColorBrush x:Key="HeaderBrush" Color="{StaticResource HeaderColor}" />
+    <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}" />
+    
+    
+    <ImageSource x:Key="LogoImageSource">/FinTrack;component/Themes/Images/full_black@4x.png</ImageSource>
+
+</ResourceDictionary>

@@ -1,0 +1,25 @@
+﻿<UserControl x:Class="FinTrack.Controls.SecurityPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="600" d:DesignWidth="900"
+             Background="{DynamicResource BackgroundBrush}"
+              Loaded="UserControl_Loaded">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="20">
+            <TextBlock Text="Безопасность"
+                       FontSize="24"
+                       FontWeight="Bold"
+                       Foreground="{DynamicResource TextBrush}"
+                       Margin="0,0,0,20"/>
+
+            <Border Background="{DynamicResource PanelBackgroundBrush}" Padding="20" CornerRadius="4">
+                <TextBlock Text="Настройки безопасности будут добавлены здесь."
+                           Foreground="{DynamicResource SubTextBrush}"/>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

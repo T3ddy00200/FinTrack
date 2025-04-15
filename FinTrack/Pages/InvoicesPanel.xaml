@@ -1,0 +1,126 @@
+﻿<UserControl x:Class="FinTrack.Controls.InvoicesPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:FinTrack.Converters"
+             Background="{DynamicResource BackgroundBrush}"
+             Loaded="UserControl_Loaded">
+
+    <UserControl.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="20">
+
+            <TextBlock Text="Инвойсы"
+                       FontSize="24"
+                       FontWeight="Bold"
+                       Foreground="{DynamicResource TextBrush}"
+                       Margin="0,0,0,20"/>
+
+            <!-- Поиск -->
+            <Grid Width="300" Margin="0,0,0,15">
+                <TextBox x:Name="SearchBox"
+                         FontSize="14"
+                         Padding="10,5"
+                         Background="{DynamicResource PanelBackgroundBrush}"
+                         Foreground="{DynamicResource TextBrush}"
+                         BorderBrush="{DynamicResource BorderBrush}"
+                         TextChanged="SearchBox_TextChanged"/>
+
+                <TextBlock Text="Поиск по клиенту или PDF..."
+                           Foreground="{DynamicResource SubTextBrush}"
+                           FontSize="13"
+                           Margin="12,5,0,0"
+                           IsHitTestVisible="False"
+                           VerticalAlignment="Top">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Text, ElementName=SearchBox}" Value="">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </Grid>
+
+            <!-- Таблица инвойсов -->
+            <DataGrid x:Name="InvoicesGrid"
+                       IsReadOnly="True"
+                      SelectionMode="Extended"
+                      SelectionUnit="FullRow"
+                      AutoGenerateColumns="False"
+                      CanUserReorderColumns="False"
+                      CanUserAddRows="False"
+                      CanUserSortColumns="False"
+                      Background="{DynamicResource PanelBackgroundBrush}"
+                      Foreground="{DynamicResource TextBrush}"
+                      BorderBrush="{DynamicResource BorderBrush}"
+                      HeadersVisibility="Column"
+                      RowBackground="{DynamicResource BackgroundBrush}"
+                      AlternatingRowBackground="{DynamicResource PanelBackgroundBrush}"
+                      GridLinesVisibility="None">
+
+                <DataGrid.Resources>
+                    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="{DynamicResource AccentColor}"/>
+                    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="White"/>
+                </DataGrid.Resources>
+
+                <DataGrid.ColumnHeaderStyle>
+                    <Style TargetType="DataGridColumnHeader">
+                        <Setter Property="Background" Value="{DynamicResource HoverBrush}"/>
+                        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+                        <Setter Property="FontWeight" Value="Bold"/>
+                        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                    </Style>
+                </DataGrid.ColumnHeaderStyle>
+
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Компания" Binding="{Binding Name}" Width="2*"/>
+
+                    <DataGridTemplateColumn Header="Инвойс (PDF)" Width="2*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Content="Открыть"
+                                        Padding="6,2"
+                                        Margin="2,0"
+                                        Background="{DynamicResource HoverBrush}"
+                                        Foreground="{DynamicResource TextBrush}"
+                                        BorderThickness="0"
+                                        Cursor="Hand"
+                                        Click="OpenInvoice_Click"
+                                        Visibility="{Binding FileName, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTemplateColumn Header="Действия" Width="2*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <Button Content="Изменить"
+                                            Margin="5,0"
+                                            Padding="8,2"
+                                            Click="ReplaceInvoice_Click"
+                                            Background="{DynamicResource HoverBrush}"
+                                            Foreground="{DynamicResource TextBrush}"/>
+                                    <Button Content="Удалить"
+                                            Margin="5,0"
+                                            Padding="8,2"
+                                            Click="DeleteInvoice_Click"
+                                            Background="{DynamicResource DangerBrush}"
+                                            Foreground="White"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

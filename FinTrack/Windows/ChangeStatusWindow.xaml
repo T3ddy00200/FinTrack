@@ -1,0 +1,24 @@
+﻿<Window x:Class="FinTrack.Windows.ChangeStatusWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Изменить статус оплаты"
+        Height="200" Width="300"
+             Background="{DynamicResource BackgroundBrush}"
+        WindowStyle="None" ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner">
+
+    <Border BorderBrush="#3A3D45" BorderThickness="1" CornerRadius="6" Padding="15">
+        <StackPanel>
+            <TextBlock Text="Выберите новый статус оплаты:" 
+                       Foreground="White" FontSize="16" Margin="0,0,0,10"/>
+
+            <StackPanel Orientation="Vertical" HorizontalAlignment="Stretch" Margin="0,10,0,10">
+                <Button Content="Оплачено" Click="Paid_Click" Background="{DynamicResource HoverBrush}" Foreground="{DynamicResource SubTextBrush}" Margin="0,5"/>
+                <Button Content="Частично оплачено" Click="Partial_Click" Background="{DynamicResource HoverBrush}" Foreground="{DynamicResource SubTextBrush}" Margin="0,5"/>
+                <Button Content="Не оплачено" Click="Unpaid_Click" Background="{DynamicResource HoverBrush}" Foreground="{DynamicResource SubTextBrush}" Margin="0,5"/>
+            </StackPanel>
+
+            <Button Content="Отмена" Click="Cancel_Click" Background="#2C2F36" Foreground="{DynamicResource SubTextBrush}"/>
+        </StackPanel>
+    </Border>
+</Window>

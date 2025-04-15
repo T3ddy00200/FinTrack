@@ -1,0 +1,88 @@
+﻿<Window x:Class="FinTrack.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="FinTrack" Height="720" MinWidth="975" MinHeight="573" Width="1280"
+        Background="{DynamicResource BackgroundBrush}"
+        Loaded="UserControl_Loaded">
+
+    <Window.Resources>
+        <Style x:Key="MenuButtonStyle" TargetType="Button">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="FontSize" Value="35" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="Padding" Value="24,14" />
+            <Setter Property="MinHeight" Value="40" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                            <ContentPresenter VerticalAlignment="Center" Margin="14,0" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+                </Trigger>
+                <Trigger Property="IsFocused" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource HighlightBrush}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <DockPanel LastChildFill="True">
+
+        <!-- Левая панель -->
+        <Grid DockPanel.Dock="Left" Width="358">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="73" />
+                <RowDefinition />
+            </Grid.RowDefinitions>
+            <Image Source="{DynamicResource LogoImageSource}" Stretch="Uniform" Margin="0,11,0,11"/>
+
+            <StackPanel Grid.Row="1" Background="{DynamicResource PanelBackgroundBrush}">
+                <Button x:Name="Menu_Home" Style="{StaticResource MenuButtonStyle}" Content="Главная" Click="Menu_Click" Tag="Главная"/>
+                <Button x:Name="Menu_Debtors" Style="{StaticResource MenuButtonStyle}" Content="Должники" Click="Menu_Click" Tag="Должники"/>
+                <Button x:Name="Menu_Invoices" Style="{StaticResource MenuButtonStyle}" Content="Инвойсы" Click="Menu_Click" Tag="Инвойсы"/>
+                <Button x:Name="Menu_Reports" Style="{StaticResource MenuButtonStyle}" Content="Отчёты" Click="Menu_Click" Tag="Отчёты"/>
+                <Button x:Name="Menu_Notifications" Style="{StaticResource MenuButtonStyle}" Content="Уведомления" Click="Menu_Click" Tag="Уведомления"/>
+                <Button x:Name="Menu_Messages" Style="{StaticResource MenuButtonStyle}" Content="Сообщения" Click="Menu_Click" Tag="Сообщения"/>
+                <Button x:Name="Menu_Replies" Style="{StaticResource MenuButtonStyle}" Content="Ответы" Click="Menu_Click" Tag="Ответы"/>
+                <Button x:Name="Menu_Security" Style="{StaticResource MenuButtonStyle}" Content="Безопасность" Click="Menu_Click" Tag="Безопасность"/>
+                <Button x:Name="Menu_Settings" Style="{StaticResource MenuButtonStyle}" Content="Настройки" Click="Menu_Click" Tag="Настройки"/>
+                <Button x:Name="Menu_Users" Style="{StaticResource MenuButtonStyle}" Content="Пользователи" Click="Menu_Click" Tag="Пользователи"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Верхняя панель -->
+        <DockPanel DockPanel.Dock="Top" Height="73" Background="{DynamicResource HeaderBrush}" Margin="0,0,0,1">
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        DockPanel.Dock="Right"
+                        Margin="0,0,20,0">
+                <Button Content="🌙/☀" Width="40" Height="30" Margin="0,15,10,15" Click="ThemeToggleButton_Click"/>
+                <TextBlock Text="Алексей" Foreground="{DynamicResource TextBrush}" VerticalAlignment="Center" FontSize="16" Margin="10,0"/>
+            </StackPanel>
+
+            <TextBlock x:Name="SectionTitle"
+                       Text="Главная"
+                       FontSize="35"
+                       FontWeight="Bold"
+                       Foreground="{DynamicResource TextBrush}"
+                       Margin="260,0,0,0"
+                       VerticalAlignment="Center"/>
+        </DockPanel>
+
+        <!-- Контент -->
+        <Grid Margin="20">
+            <ContentControl x:Name="MainContentPanel"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"/>
+        </Grid>
+
+        <Grid x:Name="_hiddenHost" Visibility="Collapsed"/>
+    </DockPanel>
+</Window>
