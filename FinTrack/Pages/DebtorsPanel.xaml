@@ -45,11 +45,6 @@
                         Background="{DynamicResource HoverBrush}" Foreground="{DynamicResource TextBrush}"/>
             </StackPanel>
 
-            <TextBlock Text="* Чтобы изменить статус у нескольких клиентов — выделите их с помощью Ctrl или Shift"
-                       Foreground="{DynamicResource SubTextBrush}"
-                       FontSize="12"
-                       Margin="5,0,0,10"/>
-
             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                 <Button Content="Выбрать всех"
             Click="SelectAll_Click"
@@ -62,7 +57,7 @@
             BorderThickness="1"/>
 
                 <ToggleButton x:Name="MultiSelectToggle"
-                  Content="Множественный выбор"
+                  Content="Выбрать несколько"
                   IsChecked="False"
                   Width="180"
                   Height="32"

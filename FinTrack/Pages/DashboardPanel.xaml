@@ -58,26 +58,6 @@
                                Foreground="{DynamicResource TextBrush}"/>
                 </StackPanel>
             </Border>
-
-            <!-- Последние уведомления -->
-            <Border Background="{DynamicResource PanelBackgroundBrush}"
-                    CornerRadius="10"
-                    Padding="15"
-                    Grid.Column="2">
-                <StackPanel>
-                    <TextBlock Text="Последние уведомления"
-                               FontWeight="Bold"
-                               FontSize="16"
-                               Foreground="{DynamicResource TextBrush}"/>
-                    <ItemsControl ItemsSource="{Binding RecentNotifications}" Margin="0,10,0,0">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="• {Binding}" Foreground="{DynamicResource TextBrush}" />
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </StackPanel>
-            </Border>
         </Grid>
     </Grid>
 </UserControl>

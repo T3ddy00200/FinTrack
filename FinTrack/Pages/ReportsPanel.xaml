@@ -2,7 +2,7 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Background="{DynamicResource BackgroundBrush}"
-              Loaded="UserControl_Loaded">
+             Loaded="UserControl_Loaded">
 
     <Grid Margin="20">
         <StackPanel>
@@ -13,22 +13,36 @@
                        Foreground="{DynamicResource TextBrush}"
                        Margin="0,0,0,20"/>
 
-            <StackPanel Margin="0,0,0,10">
-                <TextBlock Text="Поиск компаний"
-                           Foreground="{DynamicResource TextBrush}"
-                           FontSize="12"
-                           Margin="0,0,0,5"/>
+            <!-- Поисковик с подсказкой -->
+            <Grid Width="300" Margin="0,0,0,10">
                 <TextBox x:Name="SearchBox"
-                         Width="300"
-                         FontSize="20"
+                         FontSize="14"
                          Padding="10,5"
                          Background="{DynamicResource PanelBackgroundBrush}"
                          Foreground="{DynamicResource TextBrush}"
-                         BorderBrush="{DynamicResource HighlightBrush}"
+                         BorderBrush="{DynamicResource BorderBrush}"
                          TextChanged="SearchBox_TextChanged"/>
-            </StackPanel>
-          
-            
+
+                <TextBlock Text="Поиск по компании, email или телефону..."
+                           Foreground="{DynamicResource SubTextBrush}"
+                           FontSize="13"
+                           Margin="12,5,0,0"
+                           IsHitTestVisible="False"
+                           VerticalAlignment="Top">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Text, ElementName=SearchBox}" Value="">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </Grid>
+
+            <!-- Список компаний -->
             <ListBox x:Name="CompaniesListBox"
                      Height="150"
                      SelectionMode="Extended"
@@ -37,15 +51,19 @@
                      BorderBrush="{DynamicResource HighlightBrush}"
                      FontSize="18"
                      Margin="0,10"/>
+
+            <!-- Кнопка выбора всех -->
             <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
                 <TextBlock Text="Выберите компании:" Foreground="{DynamicResource TextBrush}" VerticalAlignment="Center"/>
                 <Button Content="Выбрать все"
-  Click="SelectAllCompanies_Click"
-  Background="{DynamicResource AccentBrush}"
-  Foreground="White"
-  Margin="10,0,0,0"
-  Padding="10,2"/>
+                        Click="SelectAllCompanies_Click"
+                        Background="{DynamicResource AccentBrush}"
+                        Foreground="White"
+                        Margin="10,0,0,0"
+                        Padding="10,2"/>
             </StackPanel>
+
+            <!-- Кнопки экспорта -->
             <StackPanel Orientation="Horizontal" Margin="0,20,0,0">
                 <Button Content="Экспорт в Excel"
                         Click="ExportToExcel_Click"

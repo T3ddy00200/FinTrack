@@ -14,40 +14,56 @@ using MailKit;
 using MailKit.Search;
 using MailKit.Security;
 using MimeKit;
+using FinTrack.Pages;
 using FinTrack.Views;
+using Microsoft.Office.Interop.Word;
+using MailMessage = System.Net.Mail.MailMessage;
+using MailAddress = System.Net.Mail.MailAddress;
+using Task = System.Threading.Tasks.Task;
+using System.Windows.Input;
+using System.Collections.ObjectModel;
+
 
 namespace FinTrack.Controls
 {
     public partial class MessagesPanel : UserControl
     {
-        private readonly string senderFilePath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "FinTrack", "sender.json");
-
+        private ObservableCollection<EmailMessage> allMessages = new();
         private readonly string debtorFilePath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "FinTrack", "debtors.json");
 
         private readonly string autoSendLogPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "FinTrack", "autosend_log.json");
 
+        private readonly string senderFilePath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "FinTrack", "sender.json");
+
+        private readonly string logPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "FinTrack", "autosend_log.json");
+
+
         private List<Debtor> AllDebtors = new();
         private List<string> knownEmails = new();
-        private List<EmailMessage> allMessages = new();
 
         private string senderEmail = string.Empty;
         private string sendPassword = string.Empty;
         private string readPassword = string.Empty;
         private string selectedPdfPath = string.Empty;
+        private bool _isInitialized = false;
+
 
         private DispatcherTimer refreshTimer;
 
         public MessagesPanel()
         {
             InitializeComponent();
-
             Loaded += async (_, _) =>
             {
-                LoadDebtors();
+                if (_isInitialized) return;
+                _isInitialized = true;
+
                 LoadSenderData();
+                LoadDebtors();
                 await LoadMessagesAsync();
                 AutoSendNotifications();
 
@@ -59,9 +75,17 @@ namespace FinTrack.Controls
                 };
                 refreshTimer.Start();
             };
+
         }
 
-        // === Входящие письма ===
+
+        public void ApplySenderSettings(string email, string sendPwd, string readPwd)
+        {
+            senderEmail = email;
+            sendPassword = sendPwd;
+            readPassword = readPwd;
+        }
+
         private async Task LoadMessagesAsync()
         {
             ShowLoading(true);
@@ -77,37 +101,54 @@ namespace FinTrack.Controls
                 using var client = new ImapClient();
                 await client.ConnectAsync("imap.gmail.com", 993, SecureSocketOptions.SslOnConnect);
                 await client.AuthenticateAsync(senderEmail, readPassword);
+
                 var inbox = client.Inbox;
-                await inbox.OpenAsync(FolderAccess.ReadWrite);
+                await inbox.OpenAsync(FolderAccess.ReadOnly);
 
                 var sinceDate = DateTime.UtcNow.AddDays(-7);
                 var uids = await inbox.SearchAsync(SearchQuery.DeliveredAfter(sinceDate));
 
-                allMessages.Clear();
+                // Загружаем все summary с флагами
+                var allSummaries = await inbox.FetchAsync(uids,
+                    MessageSummaryItems.Envelope | MessageSummaryItems.UniqueId | MessageSummaryItems.Flags);
 
-                foreach (var uid in uids.Reverse())
+                // Фильтруем только НЕпрочитанные
+                var unreadSummaries = allSummaries
+                    .Where(s => !s.Flags.HasValue || !s.Flags.Value.HasFlag(MessageFlags.Seen))
+                    .ToList();
+
+                // Очищаем список перед загрузкой
+                System.Windows.Application.Current.Dispatcher.Invoke(() => allMessages.Clear());
+
+                foreach (var summary in unreadSummaries.AsEnumerable().Reverse())
                 {
-                    var msg = await inbox.GetMessageAsync(uid);
-                    var from = msg.From.Mailboxes.FirstOrDefault()?.Address.ToLower();
-
+                    var from = summary.Envelope?.From?.Mailboxes.FirstOrDefault()?.Address.ToLower();
                     if (!string.IsNullOrWhiteSpace(from) && knownEmails.Contains(from))
                     {
-                        var text = !string.IsNullOrEmpty(msg.TextBody) ? msg.TextBody :
-                                   !string.IsNullOrEmpty(msg.HtmlBody) ? msg.HtmlBody : "(пусто)";
+                        var full = await inbox.GetMessageAsync(summary.UniqueId);
 
-                        allMessages.Add(new EmailMessage
+                        var text = !string.IsNullOrEmpty(full.TextBody) ? full.TextBody :
+                                   !string.IsNullOrEmpty(full.HtmlBody) ? full.HtmlBody : "(пусто)";
+
+                        var message = new EmailMessage
                         {
                             From = from,
-                            Subject = msg.Subject ?? "(без темы)",
+                            Subject = full.Subject ?? "(без темы)",
                             FullBody = text,
                             Preview = text.Length > 100 ? text[..100] : text,
-                            Uid = uid
-                        });
+                            Uid = summary.UniqueId
+                        };
+
+                        System.Windows.Application.Current.Dispatcher.Invoke(() => allMessages.Add(message));
                     }
                 }
 
-                MessagesListBox.ItemsSource = allMessages;
-                StatusTextBlock.Text = $"✅ Найдено писем: {allMessages.Count}";
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    MessagesListBox.ItemsSource = null;
+                    MessagesListBox.ItemsSource = allMessages;
+                    StatusTextBlock.Text = $"✅ Найдено непрочитанных: {allMessages.Count}";
+                });
             }
             catch (Exception ex)
             {
@@ -119,7 +160,20 @@ namespace FinTrack.Controls
             }
         }
 
-        private void MessagesListBox_SelectionChanged(object sender, SelectionChangedEventArgs e) { }
+
+        private void MessagesListBox_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            e.Handled = true;
+            var eventArg = new MouseWheelEventArgs(e.MouseDevice, e.Timestamp, e.Delta)
+            {
+                RoutedEvent = UIElement.MouseWheelEvent,
+                Source = sender
+            };
+
+            var parent = ((Control)sender).Parent as UIElement;
+            parent?.RaiseEvent(eventArg);
+        }
+
 
         private void ChoosePdf_Click(object sender, RoutedEventArgs e)
         {
@@ -143,7 +197,6 @@ namespace FinTrack.Controls
             }
         }
 
-
         private async void ReplyButton_Click(object sender, RoutedEventArgs e)
         {
             if (MessagesListBox.SelectedItem is not EmailMessage selected || string.IsNullOrWhiteSpace(ReplyTextBox.Text))
@@ -151,6 +204,8 @@ namespace FinTrack.Controls
                 MessageBox.Show("Выберите письмо и введите текст ответа.");
                 return;
             }
+
+            SendingOverlay.Visibility = Visibility.Visible;
 
             try
             {
@@ -179,18 +234,23 @@ namespace FinTrack.Controls
                     reply.Body = bodyText;
                 }
 
+                // Отправка ответа
                 using var smtp = new MailKit.Net.Smtp.SmtpClient();
                 await smtp.ConnectAsync("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
                 await smtp.AuthenticateAsync(senderEmail, sendPassword);
                 await smtp.SendAsync(reply);
                 await smtp.DisconnectAsync(true);
 
+                // Пометка как прочитан и удаление из списка
                 using var imap = new ImapClient();
                 await imap.ConnectAsync("imap.gmail.com", 993, SecureSocketOptions.SslOnConnect);
                 await imap.AuthenticateAsync(senderEmail, readPassword);
                 await imap.Inbox.OpenAsync(FolderAccess.ReadWrite);
                 await imap.Inbox.AddFlagsAsync(selected.Uid, MessageFlags.Seen, true);
                 await imap.DisconnectAsync(true);
+
+                // Удалить из списка UI
+                allMessages.Remove(selected);
 
                 MessageBox.Show("Ответ отправлен.");
                 ReplyTextBox.Clear();
@@ -200,9 +260,13 @@ namespace FinTrack.Controls
             {
                 MessageBox.Show("Ошибка отправки: " + ex.Message);
             }
+            finally
+            {
+                SendingOverlay.Visibility = Visibility.Collapsed;
+            }
         }
 
-        // === Рассылка и автоуведомления ===
+
 
         private void SendNotification_Click(object sender, RoutedEventArgs e)
         {
@@ -257,7 +321,6 @@ namespace FinTrack.Controls
         private void AutoSendNotifications()
         {
             if (!IsAutoSendDay() || WasAlreadySentThisMonth()) return;
-
             if (string.IsNullOrWhiteSpace(senderEmail) || string.IsNullOrWhiteSpace(sendPassword)) return;
 
             try
@@ -286,12 +349,15 @@ namespace FinTrack.Controls
                     smtp.Send(mail);
                 }
 
-                File.WriteAllText(autoSendLogPath, JsonSerializer.Serialize(new AutoSendLog
+                var log = new AutoSendLog
                 {
                     Year = DateTime.Today.Year,
                     Month = DateTime.Today.Month,
                     DateSent = DateTime.Now
-                }, new JsonSerializerOptions { WriteIndented = true }));
+                };
+
+                File.WriteAllText(logPath, JsonSerializer.Serialize(log, new JsonSerializerOptions { WriteIndented = true }));
+
 
                 MessageBox.Show("Автоуведомления отправлены.");
             }
@@ -317,8 +383,6 @@ namespace FinTrack.Controls
             return today == scheduled;
         }
 
-        // === Загрузка данных ===
-
         private void LoadDebtors()
         {
             if (File.Exists(debtorFilePath))
@@ -337,36 +401,17 @@ namespace FinTrack.Controls
                 }
             }
         }
-        private void SaveSettingsButton_Click(object sender, RoutedEventArgs e)
+
+        public async Task LoadMessagesIfConfiguredAsync()
         {
-            var email = SenderEmailBox.Text.Trim();
-            var password = SenderPasswordBox.Password;
-            var readPassword = ReadPasswordBox.Password;
-
-            if (string.IsNullOrWhiteSpace(email) ||
-                string.IsNullOrWhiteSpace(password) ||
-                string.IsNullOrWhiteSpace(readPassword))
+            if (!string.IsNullOrWhiteSpace(senderEmail) && !string.IsNullOrWhiteSpace(readPassword))
             {
-                MessageBox.Show("Пожалуйста, заполните все поля перед сохранением.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
+                await LoadMessagesAsync();
             }
-
-            var config = new EmailSenderConfig
+            else
             {
-                Email = email,
-                Password = password,
-                ReadPassword = readPassword
-            };
-
-            Directory.CreateDirectory(Path.GetDirectoryName(senderFilePath)!);
-            var json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(senderFilePath, json);
-
-            senderEmail = email;
-            sendPassword = password;
-            readPassword = readPassword;
-
-            MessageBox.Show("Настройки успешно сохранены.", "Успешно", MessageBoxButton.OK, MessageBoxImage.Information);
+                StatusTextBlock.Text = "📭 Для загрузки писем укажите почту и пароли в настройках.";
+            }
         }
 
         private void LoadSenderData()
@@ -376,22 +421,20 @@ namespace FinTrack.Controls
             try
             {
                 var json = File.ReadAllText(senderFilePath);
-                var config = JsonSerializer.Deserialize<EmailSenderConfig>(json);
+                var config = JsonSerializer.Deserialize<FinTrack.Models.EmailSenderConfig>(json);
                 if (config != null)
                 {
                     senderEmail = config.Email;
                     sendPassword = config.Password;
                     readPassword = config.ReadPassword;
-                    SenderEmailBox.Text = senderEmail;
-                    SenderPasswordBox.Password = sendPassword;
-                    ReadPasswordBox.Password = readPassword;
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Ошибка чтения sender.json: " + ex.Message);
+                StatusTextBlock.Text = "⚠️ Ошибка чтения sender.json: " + ex.Message;
             }
         }
+
 
         private void ShowLoading(bool show)
         {
@@ -400,26 +443,10 @@ namespace FinTrack.Controls
         }
     }
 
-    public class EmailMessage
-    {
-        public string From { get; set; }
-        public string Subject { get; set; }
-        public string Preview { get; set; }
-        public string FullBody { get; set; }
-        public UniqueId Uid { get; set; }
-    }
-
     public class AutoSendLog
     {
         public int Year { get; set; }
         public int Month { get; set; }
         public DateTime DateSent { get; set; }
-    }
-
-    public class EmailSenderConfig
-    {
-        public string Email { get; set; }
-        public string Password { get; set; }
-        public string ReadPassword { get; set; }
     }
 }

@@ -7,13 +7,15 @@ using FinTrack.Pages;
 using FinTrack.Properties;
 using FinTrack.Models;
 using static FinTrack.Pages.SettingsPanel;
+using MailMessage = System.Net.Mail.MailMessage;
+using MailAddress = System.Net.Mail.MailAddress;
 
 namespace FinTrack
 {
     public partial class MainWindow : Window
     {
+        private readonly MessagesPanel _messagesPanel = new MessagesPanel();
         private bool isDarkTheme = true;
-        private MessagesPanel _messagesPanel;
 
         public MainWindow()
         {
@@ -26,12 +28,21 @@ namespace FinTrack
             Closing += MainWindow_Closing;
             LocalizationManager.LocalizeUI(this);
 
-            // Инициализация MessagesPanel один раз, чтобы она работала в фоне
-            _messagesPanel = new MessagesPanel();
-
             string startPage = Settings.Default.StartPage;
             SectionTitle.Text = LocalizationManager.GetStringByKey(startPage);
             MainContentPanel.Content = CreatePanelByKey(startPage);
+
+            // если стартовая панель — Сообщения, сразу загружаем письма
+            if (startPage == "Сообщения")
+                _ = _messagesPanel.LoadMessagesIfConfiguredAsync();
+        }
+        protected override void OnStateChanged(EventArgs e)
+        {
+            if (WindowState == WindowState.Minimized)
+            {
+                Hide(); // Скрываем окно
+            }
+            base.OnStateChanged(e);
         }
 
         private void ThemeToggleButton_Click(object sender, RoutedEventArgs e)
@@ -67,7 +78,7 @@ namespace FinTrack
 
         private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            // Можно логировать или сохранять настройки при закрытии
+            // можно логировать или сохранять настройки при закрытии
         }
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
@@ -75,12 +86,17 @@ namespace FinTrack
             LocalizationManager.LocalizeUI(this);
         }
 
-        private void Menu_Click(object sender, RoutedEventArgs e)
+        private async void Menu_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button button && button.Tag is string tag)
             {
                 SectionTitle.Text = LocalizationManager.GetStringByKey(button.Name);
                 MainContentPanel.Content = CreatePanelByKey(tag);
+
+                if (tag == "Сообщения")
+                {
+                    await _messagesPanel.LoadMessagesIfConfiguredAsync();
+                }
             }
         }
 
@@ -90,13 +106,13 @@ namespace FinTrack
             "Должники" => new DebtorsPanel(),
             "Инвойсы" => new InvoicesPanel(),
             "Отчёты" => new ReportsPanel(),
-            "Уведомления" => new NotificationsPanel(),
             "Сообщения" => _messagesPanel,
-            "Ответы" => new RepliesPanel(),
             "Безопасность" => new SecurityPanel(),
             "Настройки" => new SettingsPanel(),
             "Пользователи" => new UsersPanel(),
             _ => new DashboardPanel()
         };
+
+       
     }
 }

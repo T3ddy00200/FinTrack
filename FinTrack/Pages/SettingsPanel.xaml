@@ -5,58 +5,119 @@
              Loaded="UserControl_Loaded">
 
     <Grid Margin="20">
-        <StackPanel>
+        <ScrollViewer Grid.Row="0">
+            <StackPanel>
 
-            <TextBlock x:Name="Menu_Settings"
-                       Text="Настройки"
-                       FontSize="24"
-                       FontWeight="Bold"
-                       Foreground="{DynamicResource TextBrush}"
-                       Margin="0,0,0,20"/>
+                <TextBlock x:Name="Menu_Settings"
+                           Text="Настройки"
+                           FontSize="24"
+                           FontWeight="Bold"
+                           Foreground="{DynamicResource TextBrush}"
+                           Margin="0,0,0,20"/>
 
-            <!-- Язык интерфейса -->
-            <ToggleButton x:Name="LanguageToggleButton"
-                          Content="Выбрать язык"
-                          Background="{DynamicResource AccentBrush}"
-                          Foreground="White"
-                          Width="150" Height="30" Margin="0,0,0,10"/>
+                <!-- Язык интерфейса -->
+                <ToggleButton x:Name="LanguageToggleButton"
+                              Content="Выбрать язык"
+                              Background="{DynamicResource AccentBrush}"
+                              Foreground="White"
+                              Width="150" Height="30" Margin="0,0,0,10"/>
 
-            <Popup x:Name="LanguagePopup"
-                   Placement="Bottom"
-                   PlacementTarget="{Binding ElementName=LanguageToggleButton}"
-                   IsOpen="{Binding IsChecked, ElementName=LanguageToggleButton}"
-                   AllowsTransparency="True"
-                   StaysOpen="False"
-                   Closed="LanguagePopup_Closed">
-                <Border Background="{DynamicResource PanelBackgroundBrush}"
-                        BorderBrush="{DynamicResource BorderBrush}"
-                        BorderThickness="1" CornerRadius="4">
-                    <ScrollViewer MaxHeight="200">
-                        <StackPanel>
-                            <Button Content="Русский" Tag="ru" Click="LanguageButton_Click"
-                                    Background="Transparent" Foreground="{DynamicResource TextBrush}" Padding="10"/>
-                            <Button Content="English" Tag="en" Click="LanguageButton_Click"
-                                    Background="Transparent" Foreground="{DynamicResource TextBrush}" Padding="10"/>
+                <Popup x:Name="LanguagePopup"
+                       Placement="Bottom"
+                       PlacementTarget="{Binding ElementName=LanguageToggleButton}"
+                       IsOpen="{Binding IsChecked, ElementName=LanguageToggleButton}"
+                       AllowsTransparency="True"
+                       StaysOpen="False"
+                       Closed="LanguagePopup_Closed">
+                    <Border Background="{DynamicResource PanelBackgroundBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1" CornerRadius="4">
+                        <ScrollViewer MaxHeight="200">
+                            <StackPanel>
+                                <Button Content="Русский" Tag="ru" Click="LanguageButton_Click"
+                                        Background="Transparent" Foreground="{DynamicResource TextBrush}" Padding="10"/>
+                                <Button Content="English" Tag="en" Click="LanguageButton_Click"
+                                        Background="Transparent" Foreground="{DynamicResource TextBrush}" Padding="10"/>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
+                </Popup>
+
+                <!-- Уведомления -->
+                <StackPanel Orientation="Horizontal" Margin="0,10,0,10" VerticalAlignment="Center">
+                    <CheckBox x:Name="Settings_Notifications"
+                              Content="Включить уведомления"
+                              Foreground="{DynamicResource TextBrush}"
+                              FontSize="14"
+                              IsChecked="True"/>
+                </StackPanel>
+
+                <!-- Автоотправка уведомлений -->
+                <Expander Header="Автоуведомления" IsExpanded="False" Margin="0,10,0,0" Foreground="{DynamicResource TextBrush}">
+                    <StackPanel Margin="10">
+                        <CheckBox x:Name="AutoSendEnabledCheckBox" Content="Включить автоотправку"
+                                  Foreground="{DynamicResource TextBrush}"/>
+
+                        <TextBlock Text="Текст уведомления:" Margin="0,10,0,2" Foreground="{DynamicResource TextBrush}"/>
+                        <TextBox x:Name="AutoNotificationTextBox" Height="80" AcceptsReturn="True"/>
+
+                        <!-- Кнопки вставки тегов -->
+                        <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
+                            <Button Content="Вставить долг {{Debt}}" Width="80" Margin="0,0,10,0"
+                                    Click="InsertNameTag_Click"
+                                    Background="{DynamicResource HoverBrush}" Foreground="{DynamicResource TextBrush}"/>
+                            <Button Content="Вставить имя {{Debt}}" Width="80"
+                                    Click="InsertDebtTag_Click"
+                                    Background="{DynamicResource HoverBrush}" Foreground="{DynamicResource TextBrush}"/>
                         </StackPanel>
-                    </ScrollViewer>
-                </Border>
-            </Popup>
 
-            <!-- Уведомления -->
-            <StackPanel Orientation="Horizontal" Margin="0,10,0,10" VerticalAlignment="Center">
-                <CheckBox x:Name="Settings_Notifications"
-                          Content="Включить уведомления"
-                          Foreground="{DynamicResource TextBrush}"
-                          FontSize="14"
-                          IsChecked="True"/>
+                        <TextBlock Text="Дата отправки:" Margin="0,10,0,2" Foreground="{DynamicResource TextBrush}"/>
+                        <DatePicker x:Name="AutoNotificationDatePicker" Margin="0,0,0,5"/>
+
+                        <TextBlock Text="Время отправки:" Margin="0,5,0,2" Foreground="{DynamicResource TextBrush}"/>
+                        <ComboBox x:Name="AutoNotificationTimeBox" Width="100">
+                            <!-- Варианты времени -->
+                            <ComboBoxItem Content="09:00"/>
+                            <ComboBoxItem Content="12:00"/>
+                            <ComboBoxItem Content="15:00"/>
+                            <ComboBoxItem Content="18:00"/>
+                        </ComboBox>
+
+                        <Button Content="Сохранить текст уведомления"
+                                Click="SaveAutoNotificationText_Click"
+                                Width="220"
+                                Height="35"
+                                Margin="0,10,0,0"
+                                Background="{DynamicResource AccentBrush}"
+                                Foreground="White"
+                                BorderBrush="{x:Null}"/>
+                    </StackPanel>
+                </Expander>
+
+                <!-- Email настройки -->
+                <TextBlock Text="Email отправителя:" Margin="0,10,0,2" Foreground="{DynamicResource TextBrush}"/>
+                <TextBox x:Name="SenderEmailBox" Margin="0,0,0,5" Height="30"/>
+
+                <TextBlock Text="Пароль для отправки:" Margin="0,5,0,2" Foreground="{DynamicResource TextBrush}"/>
+                <PasswordBox x:Name="SenderPasswordBox" Margin="0,0,0,5" Height="30"/>
+
+                <TextBlock Text="Пароль для чтения:" Margin="0,5,0,2" Foreground="{DynamicResource TextBrush}"/>
+                <PasswordBox x:Name="ReadPasswordBox" Margin="0,0,0,5" Height="30"/>
+
+                <Button Content="Сохранить Email"
+                        Click="SaveEmailButton_Click"
+                        Width="180" Height="40" Margin="0,10,0,0"
+                        Background="{DynamicResource AccentBrush}"
+                        Foreground="White"
+                        BorderBrush="{x:Null}"/>
+
+                <!-- Заглушка -->
+                <TextBlock x:Name="Settings_AutosaveNote"
+                           Text="💾 Автосохранение будет реализовано в будущих версиях"
+                           FontSize="12"
+                           Foreground="{DynamicResource SubTextBrush}"
+                           Margin="0,10,0,0"/>
             </StackPanel>
-
-            <!-- Заглушка -->
-            <TextBlock x:Name="Settings_AutosaveNote"
-                       Text="💾 Автосохранение будет реализовано в будущих версиях"
-                       FontSize="12"
-                       Foreground="{DynamicResource SubTextBrush}"
-                       Margin="0,10,0,0"/>
-        </StackPanel>
+        </ScrollViewer>
     </Grid>
 </UserControl>

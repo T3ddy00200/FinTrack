@@ -29,7 +29,9 @@ namespace FinTrack.Pages
 
         private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            string query = SearchBox.Text.Trim().ToLower();
+            var query = SearchBox.Text.Trim().ToLower();
+
+            //string query = SearchBox.Text.Trim().ToLower();
 
             CompaniesListBox.Items.Clear();
 
