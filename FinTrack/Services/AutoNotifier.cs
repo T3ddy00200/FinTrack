@@ -8,6 +8,7 @@ using System.Text.Json;
 using FinTrack.Models;
 using FinTrack.Pages;
 using FinTrack.Views;
+using static Org.BouncyCastle.Math.EC.ECCurve;
 
 namespace FinTrack.Services
 {
@@ -31,23 +32,30 @@ namespace FinTrack.Services
                 var senderJson = File.ReadAllText(senderPath);
                 var senderConfig = JsonSerializer.Deserialize<EmailSenderConfig>(senderJson);
 
-                // Загружаем текст уведомления из autosend_config.json
+                // Загружаем конфиг автоотправки
                 var configPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "FinTrack", "autosend_config.json");
                 var autoText = "Здравствуйте! У вас есть задолженность.";
+
+                AutoSendSettings config = null;
 
                 if (File.Exists(configPath))
                 {
                     var configJson = File.ReadAllText(configPath);
-                    var config = JsonSerializer.Deserialize<AutoSendSettings>(configJson);
+                    config = JsonSerializer.Deserialize<AutoSendSettings>(configJson);
+
                     if (config != null && !string.IsNullOrWhiteSpace(config.MessageText))
                         autoText = config.MessageText;
                 }
 
                 if (senderConfig == null ||
                     string.IsNullOrWhiteSpace(senderConfig.Email) ||
-                    string.IsNullOrWhiteSpace(senderConfig.Password)) return;
-
-                if (!IsAutoSendDay() || WasAlreadySentToday()) return;
+                    string.IsNullOrWhiteSpace(senderConfig.Password) ||
+                    config == null ||
+                    !IsAutoSendDateTime(config) ||
+                    WasAlreadySentToday())
+                {
+                    return;
+                }
 
                 var debtorsJson = File.ReadAllText(debtorsPath);
                 var debtors = JsonSerializer.Deserialize<List<Debtor>>(debtorsJson) ?? new();
@@ -79,6 +87,8 @@ namespace FinTrack.Services
                             mail.Attachments.Add(new Attachment(debtor.InvoiceFilePath));
 
                         smtp.Send(mail);
+
+                        System.Threading.Thread.Sleep(3000); // пауза 3 секунды
                     }
                 }
 
@@ -96,6 +106,7 @@ namespace FinTrack.Services
             }
         }
 
+
         private static bool WasAlreadySentToday()
         {
             if (!File.Exists(logPath)) return false;
@@ -104,16 +115,22 @@ namespace FinTrack.Services
         }
 
 
-       
 
-        private static bool IsAutoSendDay()
+
+        private static bool IsAutoSendDateTime(AutoSendSettings config)
         {
-            var today = DateTime.Today;
-            var scheduled = new DateTime(today.Year, today.Month, 5);
-            if (scheduled.DayOfWeek == DayOfWeek.Saturday) scheduled = scheduled.AddDays(2);
-            if (scheduled.DayOfWeek == DayOfWeek.Sunday) scheduled = scheduled.AddDays(1);
-            return today == scheduled;
+            if (!DateTime.TryParse(config.ScheduledDate, out var scheduledDate)) return false;
+            if (!TimeSpan.TryParse(config.Time, out var scheduledTime)) return false;
+
+            var now = DateTime.Now;
+            return now.Date == scheduledDate.Date &&
+                   now.TimeOfDay.Hours == scheduledTime.Hours &&
+                   now.TimeOfDay.Minutes >= scheduledTime.Minutes;
         }
+
+
+
+
     }
 
     public class AutoSendLog

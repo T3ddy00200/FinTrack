@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Threading;
 using FinTrack.Models;
 
 namespace FinTrack
@@ -10,18 +11,41 @@ namespace FinTrack
     public partial class App : Application
     {
         private TaskbarIcon? _trayIcon;
+        private DispatcherTimer autoSendTimer;
 
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
 
-            // 1. Загружаем язык и настройки
+            // 1. Загружаем язык
             Pages.SettingsPanel.AppInitializer.LoadLanguageFromConfig();
 
-            // 2. Запускаем автоуведомления
-            Services.AutoNotifier.TryAutoSend();
+            // 2. Трей-иконка
+            InitTrayIcon();
 
-            // 3. Инициализируем трей-иконку
+            // 3. Автоотправка уведомлений по таймеру
+            autoSendTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromMinutes(1)
+            };
+            autoSendTimer.Tick += (_, _) =>
+            {
+                Services.AutoNotifier.TryAutoSend();
+            };
+            autoSendTimer.Start();
+
+            // 4. Главное окно
+            MainWindow = new MainWindow();
+            MainWindow.Closing += (s, args) =>
+            {
+                args.Cancel = true;
+                MainWindow.Hide(); // свернуть в трей
+            };
+            MainWindow.Show();
+        }
+
+        private void InitTrayIcon()
+        {
             string iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "icon.ico");
             if (!File.Exists(iconPath))
             {
@@ -40,7 +64,6 @@ namespace FinTrack
             {
                 Items =
                 {
-
                     new MenuItem
                     {
                         Header = "Открыть",
@@ -53,28 +76,12 @@ namespace FinTrack
                     }
                 }
             };
-
-
-            // 4. Переопределяем поведение закрытия окна
-            MainWindow ??= new MainWindow();
-            MainWindow.Closing += (s, args) =>
-            {
-                args.Cancel = true;
-                MainWindow.Hide();
-            };
-
-            MainWindow.Show();
         }
 
         private void ShowMainWindow()
         {
-            if (MainWindow.Visibility == Visibility.Visible)
-                return;
-
             if (MainWindow == null)
-            {
                 MainWindow = new MainWindow();
-            }
 
             MainWindow.Show();
             MainWindow.WindowState = WindowState.Normal;

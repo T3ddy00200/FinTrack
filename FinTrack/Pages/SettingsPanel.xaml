@@ -77,10 +77,30 @@
                         <TextBlock Text="Время отправки:" Margin="0,5,0,2" Foreground="{DynamicResource TextBrush}"/>
                         <ComboBox x:Name="AutoNotificationTimeBox" Width="100">
                             <!-- Варианты времени -->
+                            <ComboBoxItem Content="00:00"/>
+                            <ComboBoxItem Content="01:00"/>
+                            <ComboBoxItem Content="02:00"/>
+                            <ComboBoxItem Content="03:00"/>
+                            <ComboBoxItem Content="04:00"/>
+                            <ComboBoxItem Content="05:00"/>
+                            <ComboBoxItem Content="06:00"/>
+                            <ComboBoxItem Content="07:00"/>
+                            <ComboBoxItem Content="08:00"/>
                             <ComboBoxItem Content="09:00"/>
+                            <ComboBoxItem Content="10:00"/>
+                            <ComboBoxItem Content="11:00"/>
                             <ComboBoxItem Content="12:00"/>
+                            <ComboBoxItem Content="13:00"/>
+                            <ComboBoxItem Content="14:00"/>
                             <ComboBoxItem Content="15:00"/>
+                            <ComboBoxItem Content="16:00"/>
+                            <ComboBoxItem Content="17:00"/>
                             <ComboBoxItem Content="18:00"/>
+                            <ComboBoxItem Content="19:00"/>
+                            <ComboBoxItem Content="20:00"/>
+                            <ComboBoxItem Content="21:00"/>
+                            <ComboBoxItem Content="22:00"/>
+                            <ComboBoxItem Content="23:00"/>
                         </ComboBox>
 
                         <Button Content="Сохранить текст уведомления"

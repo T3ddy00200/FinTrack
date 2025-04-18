@@ -10,6 +10,8 @@ using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using FinTrack.Properties;
+using System.ComponentModel;
+using ClosedXML.Excel;
 
 namespace FinTrack.Pages
 {
@@ -34,6 +36,7 @@ namespace FinTrack.Pages
             InitializeComponent();
             DebtorsGrid.ItemsSource = Debtors;
             LoadDebtors();
+            SortDebtors();
         }
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
@@ -234,6 +237,55 @@ namespace FinTrack.Pages
             foreach (var d in filtered)
                 Debtors.Add(d);
         }
+
+        private void ImportFromExcel_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new OpenFileDialog
+            {
+                Filter = "Excel файлы (*.xlsx)|*.xlsx",
+                Title = "Выберите Excel-файл"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                try
+                {
+                    using var workbook = new XLWorkbook(dialog.FileName);
+                    var sheet = workbook.Worksheets.First();
+
+                    for (int i = 2; i <= sheet.LastRowUsed().RowNumber(); i++)
+                    {
+                        var row = sheet.Row(i);
+
+                        var totalDebt = decimal.TryParse(row.Cell(4).GetValue<string>(), out var d) ? d : 0;
+                        var paid = decimal.TryParse(row.Cell(5).GetValue<string>(), out var p) ? p : 0;
+
+                        var debtor = new Debtor
+                        {
+                            Name = row.Cell(1).GetValue<string>(),
+                            Email = row.Cell(2).GetValue<string>(),
+                            Phone = row.Cell(3).GetValue<string>(),
+                            TotalDebt = totalDebt,
+                            Paid = paid,
+                            DueDate = DateTime.TryParse(row.Cell(6).GetValue<string>(), out var date) ? date : DateTime.Today,
+                            InvoiceFilePath = row.Cell(7).GetValue<string>()
+                        };
+
+                        Debtors.Add(debtor);
+                    }
+
+                    SaveDebtors();
+                    SortDebtors();
+                    MessageBox.Show("Должники успешно загружены из Excel.", "Готово", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Ошибка при импорте Excel: " + ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+
 
         private void ClearInputs()
         {

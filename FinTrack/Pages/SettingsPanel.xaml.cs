@@ -66,7 +66,7 @@ namespace FinTrack.Pages
             LocalizationManager.LocalizeUI(Application.Current.MainWindow);
 
             string autoPath = Path.Combine(
-    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "FinTrack", "autosend_config.json");
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "FinTrack", "autosend_config.json");
 
             if (File.Exists(autoPath))
             {
@@ -80,11 +80,22 @@ namespace FinTrack.Pages
                         AutoSendEnabledCheckBox.IsChecked = autoConfig.Enabled;
                         AutoNotificationTimeBox.Text = autoConfig.Time;
                         AutoNotificationTextBox.Text = autoConfig.MessageText;
+
+                        // 👇 Загружаем дату
+                        if (!string.IsNullOrWhiteSpace(autoConfig.ScheduledDate) &&
+                            DateTime.TryParse(autoConfig.ScheduledDate, out var parsedDate))
+                        {
+                            AutoNotificationDatePicker.SelectedDate = parsedDate;
+                        }
                     }
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Ошибка загрузки настроек автоуведомления: " + ex.Message);
+                }
             }
         }
+
 
         private void InsertNameTag_Click(object sender, RoutedEventArgs e)
         {
@@ -105,28 +116,21 @@ namespace FinTrack.Pages
             var autoPath = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "FinTrack", "autosend_config.json");
 
-            AutoSendSettings config;
-
-            // Загружаем текущие настройки, если они уже есть
-            if (File.Exists(autoPath))
+            var config = new AutoSendSettings
             {
-                var json = File.ReadAllText(autoPath);
-                config = JsonSerializer.Deserialize<AutoSendSettings>(json) ?? new AutoSendSettings();
-            }
-            else
-            {
-                config = new AutoSendSettings();
-            }
-
-            // Обновляем только текст уведомления
-            config.MessageText = AutoNotificationTextBox.Text.Trim();
+                Enabled = AutoSendEnabledCheckBox.IsChecked == true,
+                MessageText = AutoNotificationTextBox.Text.Trim(),
+                Time = AutoNotificationTimeBox.Text.Trim(),
+                ScheduledDate = AutoNotificationDatePicker.SelectedDate?.ToString("yyyy-MM-dd") ?? ""
+            };
 
             var updatedJson = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
             Directory.CreateDirectory(Path.GetDirectoryName(autoPath)!);
             File.WriteAllText(autoPath, updatedJson);
 
-            MessageBox.Show("Текст автоуведомления сохранён.", "Готово", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show("Настройки автоуведомления сохранены.", "Готово", MessageBoxButton.OK, MessageBoxImage.Information);
         }
+
 
 
         private class AppSettings
@@ -226,7 +230,8 @@ namespace FinTrack.Pages
             {
                 Enabled = AutoSendEnabledCheckBox.IsChecked == true,
                 Time = AutoNotificationTimeBox.Text.Trim(),
-                MessageText = AutoNotificationTextBox.Text.Trim()
+                MessageText = AutoNotificationTextBox.Text.Trim(),
+                ScheduledDate = AutoNotificationDatePicker.SelectedDate?.ToString("yyyy-MM-dd") ?? ""
             };
 
             var json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
@@ -238,12 +243,16 @@ namespace FinTrack.Pages
         }
 
 
+
     }
     public class AutoSendSettings
     {
         public bool Enabled { get; set; }
-        public string Time { get; set; } = "09:00";
+        public string Time { get; set; } = "09:00"; // Время в формате HH:mm
         public string MessageText { get; set; } = "Здравствуйте! У вас есть задолженность.";
+        public string ScheduledDate { get; set; } = "";
+        // дата из DatePicker
     }
+
 
 }
