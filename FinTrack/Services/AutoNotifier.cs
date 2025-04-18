@@ -119,14 +119,34 @@ namespace FinTrack.Services
 
         private static bool IsAutoSendDateTime(AutoSendSettings config)
         {
-            if (!DateTime.TryParse(config.ScheduledDate, out var scheduledDate)) return false;
-            if (!TimeSpan.TryParse(config.Time, out var scheduledTime)) return false;
-
             var now = DateTime.Now;
-            return now.Date == scheduledDate.Date &&
-                   now.TimeOfDay.Hours == scheduledTime.Hours &&
-                   now.TimeOfDay.Minutes >= scheduledTime.Minutes;
+
+            if (!string.IsNullOrWhiteSpace(config.ScheduledDate))
+            {
+                if (DateTime.TryParse(config.ScheduledDate, out var exactDate) &&
+                    TimeSpan.TryParse(config.Time, out var exactTime))
+                {
+                    return now.Date == exactDate.Date &&
+                           now.TimeOfDay.Hours == exactTime.Hours &&
+                           now.TimeOfDay.Minutes >= exactTime.Minutes;
+                }
+            }
+
+            // Если ScheduledDate не задан — проверяем по дню месяца
+            if (config.ScheduledDay > 0 &&
+                TimeSpan.TryParse(config.Time, out var scheduledTime))
+            {
+                var scheduledDate = new DateTime(now.Year, now.Month,
+                    Math.Min(config.ScheduledDay, DateTime.DaysInMonth(now.Year, now.Month)));
+
+                return now.Date == scheduledDate.Date &&
+                       now.TimeOfDay.Hours == scheduledTime.Hours &&
+                       now.TimeOfDay.Minutes >= scheduledTime.Minutes;
+            }
+
+            return false;
         }
+
 
 
 
@@ -144,5 +164,8 @@ namespace FinTrack.Services
         public string Password { get; set; }
         public string ReadPassword { get; set; }
         public string AutoNotificationText { get; set; }
+
+       
+
     }
 }

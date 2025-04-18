@@ -252,6 +252,7 @@ namespace FinTrack.Pages
         public string MessageText { get; set; } = "Здравствуйте! У вас есть задолженность.";
         public string ScheduledDate { get; set; } = "";
         // дата из DatePicker
+        public int ScheduledDay { get; set; } = 5;              // день месяца
     }
 
 
