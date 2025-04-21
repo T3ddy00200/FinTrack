@@ -3,7 +3,7 @@ name: 🚀 Deploy FinTrack via SSH
 on:
   push:
     branches:
-      - main  # Только при пуше в main
+      - master  # Триггер при пуше в ветку master
 
 env:
   SERVER_USERNAME: root
@@ -18,7 +18,7 @@ jobs:
       - name: 🔽 Checkout repository
         uses: actions/checkout@v2
 
-      - name: 🔐 SSH into server and pull latest code
+      - name: 🔐 SSH into server and deploy latest code
         uses: appleboy/ssh-action@master
         with:
           host: ${{ env.SERVER_IP }}
@@ -28,8 +28,9 @@ jobs:
             echo "📁 Переход в директорию проекта"
             cd /root/src/fintrack/FinTrack
 
-            echo "💥 Жесткий сброс к origin/main"
+            echo "🔄 Обновление кода из GitHub (ветка master)"
             git fetch origin
-            git reset --hard origin/main
+            git reset --hard origin/master
 
+            echo "✅ Код успешно обновлён!"
           timeout: 120s
