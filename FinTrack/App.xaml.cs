@@ -12,13 +12,13 @@ namespace FinTrack
     {
         private TaskbarIcon? _trayIcon;
         private DispatcherTimer autoSendTimer;
-
+      
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
 
             // 1. Загружаем язык
-            Pages.SettingsPanel.AppInitializer.LoadLanguageFromConfig();
+            //Pages.SettingsPanel.AppInitializer.LoadLanguageFromConfig();
 
             // 2. Трей-иконка
             InitTrayIcon();
@@ -28,10 +28,7 @@ namespace FinTrack
             {
                 Interval = TimeSpan.FromMinutes(1)
             };
-            autoSendTimer.Tick += (_, _) =>
-            {
-                Services.AutoNotifier.TryAutoSend();
-            };
+            autoSendTimer.Tick += (_, _) => Services.AutoNotifier.TryAutoSend();
             autoSendTimer.Start();
 
             // 4. Главное окно
@@ -46,10 +43,21 @@ namespace FinTrack
 
         private void InitTrayIcon()
         {
-            string iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "icon.ico");
+            // Ищем icon.ico в папке Themes/Images рядом с EXE
+            var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            var projectDir = Directory.GetParent(baseDir)   // …\bin\Debug\netX
+                         .Parent              // …\bin\Debug
+                         .Parent              // …\bin
+                         .Parent              // (если нужно) …\yourProjectFolder
+                         .FullName;
+            var iconPath = Path.Combine(
+     projectDir,
+     "Themes",
+     "Images",
+     "icon.ico");
             if (!File.Exists(iconPath))
             {
-                MessageBox.Show("Не найден icon.ico для трей-иконки!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Не найден файл трей-иконки:\n{iconPath}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 Shutdown();
                 return;
             }
@@ -64,16 +72,8 @@ namespace FinTrack
             {
                 Items =
                 {
-                    new MenuItem
-                    {
-                        Header = "Открыть",
-                        Command = new RelayCommand(_ => ShowMainWindow())
-                    },
-                    new MenuItem
-                    {
-                        Header = "Выход",
-                        Command = new RelayCommand(_ => ExitApp())
-                    }
+                    new MenuItem { Header = "Открыть", Command = new RelayCommand(_ => ShowMainWindow()) },
+                    new MenuItem { Header = "Выход",   Command = new RelayCommand(_ => ExitApp()) }
                 }
             };
         }

@@ -22,6 +22,8 @@ using MailAddress = System.Net.Mail.MailAddress;
 using Task = System.Threading.Tasks.Task;
 using System.Windows.Input;
 using System.Collections.ObjectModel;
+using System.Threading;
+
 
 
 namespace FinTrack.Controls
@@ -177,25 +179,46 @@ namespace FinTrack.Controls
 
         private void ChoosePdf_Click(object sender, RoutedEventArgs e)
         {
-            var dialog = new Microsoft.Win32.OpenFileDialog { Filter = "PDF файлы (*.pdf)|*.pdf" };
-            if (dialog.ShowDialog() == true)
-            {
-                selectedPdfPath = dialog.FileName;
+            var dlg = new Microsoft.Win32.OpenFileDialog { Filter = "PDF файлы (*.pdf)|*.pdf" };
+            if (dlg.ShowDialog() != true)
+                return;
 
-                if (sender is Button btn)
-                {
-                    if (btn.DataContext?.ToString()?.Contains("Notification") == true ||
-                        btn.Name == "NotificationChoosePdfButton")
-                    {
-                        NotificationPdfFileNameTextBlock.Text = Path.GetFileName(selectedPdfPath);
-                    }
-                    else
-                    {
-                        ReplyPdfFileNameTextBlock.Text = Path.GetFileName(selectedPdfPath);
-                    }
-                }
+            // полный путь к выбранному файлу
+            selectedPdfPath = dlg.FileName;
+            // только имя файла
+            var fileName = System.IO.Path.GetFileName(selectedPdfPath);
+
+            var btn = sender as Button;
+            if (btn?.Name == "NotificationChoosePdfButton")
+            {
+                // обновляем текст в нужном TextBlock
+                NotificationPdfFileNameTextBlock.Text = fileName;
+            }
+            else
+            {
+                // если у вас есть вторая кнопка для ответа, например ReplyChoosePdfButton
+                ReplyPdfFileNameTextBlock.Text = fileName;
             }
         }
+
+        // Вставляет {Name} в текст ручного уведомления
+        private void InsertNameTag_Manual_Click(object sender, RoutedEventArgs e)
+        {
+            // если TextBox пустой или курсор стоит в конце, просто добавляем
+            MessageTextBox.Text += " {Name}";
+            // ставим курсор после вставленного текста
+            MessageTextBox.CaretIndex = MessageTextBox.Text.Length;
+            MessageTextBox.Focus();
+        }
+
+        // Вставляет {Debt} в текст ручного уведомления
+        private void InsertDebtTag_Manual_Click(object sender, RoutedEventArgs e)
+        {
+            MessageTextBox.Text += " {Debt}";
+            MessageTextBox.CaretIndex = MessageTextBox.Text.Length;
+            MessageTextBox.Focus();
+        }
+
 
         private async void ReplyButton_Click(object sender, RoutedEventArgs e)
         {
@@ -270,6 +293,7 @@ namespace FinTrack.Controls
 
         private void SendNotification_Click(object sender, RoutedEventArgs e)
         {
+
             if (string.IsNullOrWhiteSpace(senderEmail) || string.IsNullOrWhiteSpace(sendPassword))
             {
                 MessageBox.Show("Настройки отправителя не заполнены.");
@@ -295,20 +319,32 @@ namespace FinTrack.Controls
 
                 foreach (var debtor in selected)
                 {
+                    // Подставляем имя и сумму долга в текст
+                    decimal debtAmount = debtor.TotalDebt - debtor.Paid;
+                    string body = text
+                        .Replace("{Name}", debtor.Name)
+                        .Replace("{Debt}", debtAmount.ToString("0.00"));
+
                     var mail = new MailMessage
                     {
                         From = new MailAddress(senderEmail),
                         Subject = "Уведомление от FinTrack",
-                        Body = text,
+                        Body = body,
                         IsBodyHtml = false
                     };
                     mail.To.Add(debtor.Email);
 
+                    // Вложения и остальная логика без изменений
                     if (!string.IsNullOrEmpty(debtor.InvoiceFilePath) && File.Exists(debtor.InvoiceFilePath))
                         mail.Attachments.Add(new Attachment(debtor.InvoiceFilePath));
 
                     smtp.Send(mail);
+
+                    // пауза 3 секунды перед отправкой следующего письма
+                    Thread.Sleep(3000);
                 }
+
+
 
                 MessageBox.Show("Уведомления отправлены.");
             }
@@ -432,6 +468,28 @@ namespace FinTrack.Controls
             catch (Exception ex)
             {
                 StatusTextBlock.Text = "⚠️ Ошибка чтения sender.json: " + ex.Message;
+            }
+        }
+
+        private void RecipientsListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (RecipientsListBox.SelectedItem is Debtor debtor && !debtor.HasInvoice)
+            {
+                var dlg = new Microsoft.Win32.OpenFileDialog
+                {
+                    Filter = "PDF файлы (*.pdf)|*.pdf"
+                };
+                if (dlg.ShowDialog() == true)
+                {
+                    debtor.InvoiceFilePath = dlg.FileName;
+
+                    // Сохраняем обновлённый список должников
+                    var json = JsonSerializer.Serialize(AllDebtors, new JsonSerializerOptions { WriteIndented = true });
+                    File.WriteAllText(debtorFilePath, json);
+
+                    // Обновляем отображение списка
+                    RecipientsListBox.Items.Refresh();
+                }
             }
         }
 

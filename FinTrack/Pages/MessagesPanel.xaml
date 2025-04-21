@@ -18,37 +18,68 @@
                   Foreground="{DynamicResource TextBrush}"
                   Background="{DynamicResource PanelBackgroundBrush}"
                   FontWeight="Bold"
-                  FontSize="16"
-                  HorizontalAlignment="Stretch">
+                  FontSize="16" 
+                  HorizontalAlignment="Stretch" IsExpanded="True">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <StackPanel Margin="10" HorizontalAlignment="Stretch">
                     <TextBlock Text="Текст уведомления:"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,5,0,10">
+                        <Button Content="Вставить имя {Name}"
+                Click="InsertNameTag_Manual_Click"
+                Margin="0,0,10,0"
+                Background="{DynamicResource HoverBrush}"
+                Foreground="{DynamicResource TextBrush}"/>
+                        <Button Content="Вставить долг {Debt}"
+                Click="InsertDebtTag_Manual_Click"
+                Background="{DynamicResource HoverBrush}"
+                Foreground="{DynamicResource TextBrush}"/>
+                    </StackPanel>
                     <TextBox x:Name="MessageTextBox"
                              Height="80"
                              TextWrapping="Wrap"
                              AcceptsReturn="True"
-                             Margin="0,5"
+                             Margin="0,5"  Background="{DynamicResource BorderBrush}" Foreground="{DynamicResource TextBrush}"
                              HorizontalAlignment="Stretch"/>
+                    
 
                     <TextBlock Text="Выберите получателей:" Margin="10,10,0,5"/>
                     <ListBox x:Name="RecipientsListBox"
-                             Height="120"
-                             SelectionMode="Extended"
-                             HorizontalAlignment="Stretch"
-                             DisplayMemberPath="Name"/>
+         Height="120"
+         SelectionMode="Extended"
+         HorizontalAlignment="Stretch"
+                          Background="{DynamicResource BorderBrush}"     
+         MouseDoubleClick="RecipientsListBox_MouseDoubleClick">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Margin="0,2">
+                                    <!-- Имя должника -->
+                                    <TextBlock Text="{Binding Name}"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextBrush}"/>
+                                    <!-- Отступ -->
+                                    <TextBlock Width="12"/>
+                                    <!-- Статус PDF: имя файла или «(нет PDF)» -->
+                                    <TextBlock Text="{Binding InvoiceFileName}"
+                           Foreground="{DynamicResource SubTextBrush}"
+                           FontStyle="Italic"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
 
                     <DockPanel Margin="0,10,0,0" HorizontalAlignment="Center">
-                        <Button Content="Выбрать PDF"
-                                Click="ChoosePdf_Click"
-                                Width="140"
-                                Background="{DynamicResource AccentBrush}"
-                                Foreground="White"
-                                BorderBrush="{x:Null}"/>
+                        <Button x:Name="NotificationChoosePdfButton"
+            Content="Выбрать PDF"
+            Click="ChoosePdf_Click"
+            Width="140"
+            Background="{DynamicResource AccentBrush}"
+            Foreground="White"
+            BorderBrush="{x:Null}"/>
                         <TextBlock x:Name="NotificationPdfFileNameTextBlock"
-                                   Text="(файл не выбран)"
-                                   Margin="10,0,0,0"
-                                   VerticalAlignment="Center"
-                                   Foreground="{DynamicResource SubTextBrush}"/>
+               Text="(файл не выбран)"
+               Margin="10,0,0,0"
+               VerticalAlignment="Center"
+               Foreground="{DynamicResource SubTextBrush}"/>
                     </DockPanel>
 
                     <Button Content="Отправить уведомление"

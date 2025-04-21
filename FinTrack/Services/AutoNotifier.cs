@@ -117,35 +117,28 @@ namespace FinTrack.Services
 
 
 
-        private static bool IsAutoSendDateTime(AutoSendSettings config)
-        {
-            var now = DateTime.Now;
+   private static bool IsAutoSendDateTime(AutoSendSettings config)
+{
+    var now = DateTime.Now;
 
-            if (!string.IsNullOrWhiteSpace(config.ScheduledDate))
-            {
-                if (DateTime.TryParse(config.ScheduledDate, out var exactDate) &&
-                    TimeSpan.TryParse(config.Time, out var exactTime))
-                {
-                    return now.Date == exactDate.Date &&
-                           now.TimeOfDay.Hours == exactTime.Hours &&
-                           now.TimeOfDay.Minutes >= exactTime.Minutes;
-                }
-            }
+    // убираем этот блок:
+    // if (!string.IsNullOrWhiteSpace(config.ScheduledDate)) { … }
 
-            // Если ScheduledDate не задан — проверяем по дню месяца
-            if (config.ScheduledDay > 0 &&
-                TimeSpan.TryParse(config.Time, out var scheduledTime))
-            {
-                var scheduledDate = new DateTime(now.Year, now.Month,
-                    Math.Min(config.ScheduledDay, DateTime.DaysInMonth(now.Year, now.Month)));
+    // Оставляем только ежемесячную проверку по дню:
+    if (config.ScheduledDay > 0 &&
+        TimeSpan.TryParse(config.Time, out var scheduledTime))
+    {
+        var dayInMonth = Math.Min(config.ScheduledDay, DateTime.DaysInMonth(now.Year, now.Month));
+        var scheduledDate = new DateTime(now.Year, now.Month, dayInMonth);
 
-                return now.Date == scheduledDate.Date &&
-                       now.TimeOfDay.Hours == scheduledTime.Hours &&
-                       now.TimeOfDay.Minutes >= scheduledTime.Minutes;
-            }
+        return now.Date == scheduledDate.Date
+               && now.TimeOfDay.Hours   == scheduledTime.Hours
+               && now.TimeOfDay.Minutes >= scheduledTime.Minutes;
+    }
 
-            return false;
-        }
+    return false;
+}
+
 
 
 

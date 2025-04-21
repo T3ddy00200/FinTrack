@@ -21,7 +21,7 @@ namespace FinTrack
         {
             var savedLang = Settings.Default.Language;
             LocalizationManager.SetCulture(savedLang);
-            AppInitializer.LoadLanguageFromConfig();
+            //AppInitializer.LoadLanguageFromConfig();
 
             InitializeComponent();
             StateChanged += MainWindow_StateChanged;

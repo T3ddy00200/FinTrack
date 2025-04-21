@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Text.Json.Serialization;
 
 namespace FinTrack.Views
 {
@@ -29,5 +31,16 @@ namespace FinTrack.Views
                 return "Оплачено";
             }
         }
+
+        // Новые свойства для работы с PDF
+        [JsonIgnore]
+        public bool HasInvoice =>
+            !string.IsNullOrWhiteSpace(InvoiceFilePath)
+            && File.Exists(InvoiceFilePath);
+
+        [JsonIgnore]
+        public string InvoiceFileName => HasInvoice
+            ? Path.GetFileName(InvoiceFilePath)
+            : "(нет PDF)";
     }
 }
