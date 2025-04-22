@@ -83,16 +83,29 @@
 
                 <!-- Таблица -->
                 <DataGrid x:Name="DebtorsGrid"
-                          IsReadOnly="True"
-                          PreviewMouseLeftButtonDown="DebtorsGrid_PreviewMouseLeftButtonDown"
-                          SelectionMode="Extended" SelectionUnit="FullRow"
-                          AutoGenerateColumns="False" CanUserReorderColumns="False"
-                          CanUserAddRows="False" CanUserSortColumns="False"
-                          Background="{DynamicResource PanelBackgroundBrush}"
-                          Foreground="{DynamicResource TextBrush}" BorderBrush="{DynamicResource BorderBrush}"
-                          HeadersVisibility="Column" RowBackground="{DynamicResource BackgroundBrush}"
-                          AlternatingRowBackground="{DynamicResource PanelBackgroundBrush}"
-                          GridLinesVisibility="None" Margin="0,10,0,0">
+                    IsReadOnly="True"
+                           EnableRowVirtualization="True"
+          EnableColumnVirtualization="True"
+          VirtualizingPanel.IsVirtualizing="True"
+          VirtualizingPanel.VirtualizationMode="Recycling"
+          PreviewMouseLeftButtonDown="DebtorsGrid_PreviewMouseLeftButtonDown"
+          PreviewMouseWheel="DebtorsGrid_PreviewMouseWheel"
+          ScrollViewer.VerticalScrollBarVisibility="Disabled"
+          ScrollViewer.CanContentScroll="False"
+          SelectionMode="Extended"
+          SelectionUnit="FullRow"
+          AutoGenerateColumns="False"
+          CanUserReorderColumns="False"
+          CanUserAddRows="False"
+          CanUserSortColumns="False"
+          Background="{DynamicResource PanelBackgroundBrush}"
+          Foreground="{DynamicResource TextBrush}"
+          BorderBrush="{DynamicResource BorderBrush}"
+          HeadersVisibility="Column"
+          RowBackground="{DynamicResource BackgroundBrush}"
+          AlternatingRowBackground="{DynamicResource PanelBackgroundBrush}"
+          GridLinesVisibility="None"
+          Margin="0,10,0,0">
 
                     <DataGrid.Resources>
                         <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="{DynamicResource AccentColor}" />

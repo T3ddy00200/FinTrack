@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
+using Xceed.Wpf.Toolkit;            // для TimePicker
 using FinTrack.Controls;
 using FinTrack.Models;
 
@@ -11,12 +12,10 @@ namespace FinTrack.Pages
 {
     public partial class SettingsPanel : UserControl
     {
-        // Путь к основному конфигу приложения (язык)
         private readonly string configPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "FinTrack", "config.json");
 
-        // Путь к файлу настроек автоотправки
         private readonly string autoConfigPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "FinTrack", "autosend_config.json");
@@ -27,29 +26,29 @@ namespace FinTrack.Pages
             LoadSettings();
         }
 
+        // Loaded в XAML
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            // Применяем локализацию к панели
             LocalizationManager.LocalizeUI(this);
         }
 
-        // Обработчик выбора языка
+        // Язык: клики по кнопкам в Popup
         private void LanguageButton_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button btn && btn.Tag is string culture)
+            if (sender is Button btn && btn.Tag is string cultureCode)
             {
-                LocalizationManager.SetCulture(culture);
+                LocalizationManager.SetCulture(cultureCode);
                 LocalizationManager.LocalizeUI(Application.Current.MainWindow);
-                SaveAppLanguage(culture);
+                SaveAppLanguage(cultureCode);
             }
         }
 
+        // Закрытие Popup
         private void LanguagePopup_Closed(object sender, EventArgs e)
         {
             LanguageToggleButton.IsChecked = false;
         }
 
-        // Сохранение языка
         private void SaveAppLanguage(string lang)
         {
             Directory.CreateDirectory(Path.GetDirectoryName(configPath)!);
@@ -58,10 +57,9 @@ namespace FinTrack.Pages
                 JsonSerializer.Serialize(cfg, new JsonSerializerOptions { WriteIndented = true }));
         }
 
-        // Загрузка всех настроек
         private void LoadSettings()
         {
-            // 1. Язык
+            // 1) Язык
             if (File.Exists(configPath))
             {
                 try
@@ -74,29 +72,28 @@ namespace FinTrack.Pages
                         LocalizationManager.LocalizeUI(Application.Current.MainWindow);
                     }
                 }
-                catch { /* можно логировать */ }
+                catch { }
             }
 
-            // 2. Настройки автоотправки
+            // 2) Авторассылка
             if (File.Exists(autoConfigPath))
             {
                 try
                 {
                     var json = File.ReadAllText(autoConfigPath);
                     var autoCfg = JsonSerializer.Deserialize<AutoSendSettings>(json);
+
                     if (autoCfg != null)
                     {
                         AutoSendEnabledCheckBox.IsChecked = autoCfg.Enabled;
-                        AutoNotificationTextBox.Text = autoCfg.MessageText;
+                        AutoNotificationSubjectTextBox.Text = autoCfg.SubjectTemplate;
+                        AutoNotificationBodyTextBox.Text = autoCfg.BodyTemplate;
 
-                        // Время
-                        var timeItem = AutoNotificationTimeBox.Items
-                            .OfType<ComboBoxItem>()
-                            .FirstOrDefault(i => (string)i.Content == autoCfg.Time);
-                        if (timeItem != null)
-                            AutoNotificationTimeBox.SelectedItem = timeItem;
+                        // Восстанавливаем время в TimePicker
+                        if (TimeSpan.TryParse(autoCfg.Time, out var ts))
+                            AutoNotificationTimePicker.Value = DateTime.Today + ts;
 
-                        // Дата: строим дату текущего месяца на основании ScheduledDay
+                        // Восстанавливаем дату
                         var today = DateTime.Today;
                         int day = Math.Min(autoCfg.ScheduledDay,
                                            DateTime.DaysInMonth(today.Year, today.Month));
@@ -106,85 +103,76 @@ namespace FinTrack.Pages
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Ошибка загрузки настроек автоуведомления:\n" + ex.Message,
+                    Xceed.Wpf.Toolkit.MessageBox.Show("Ошибка загрузки автонастроек:\n" + ex.Message,
                                     "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }
 
-        // Вставка тега {Name}
-        private void InsertNameTag_Click(object sender, RoutedEventArgs e)
-        {
-            AutoNotificationTextBox.Text += " {Name}";
-            AutoNotificationTextBox.CaretIndex = AutoNotificationTextBox.Text.Length;
-            AutoNotificationTextBox.Focus();
-        }
-
-        // Вставка тега {Debt}
-        private void InsertDebtTag_Click(object sender, RoutedEventArgs e)
-        {
-            AutoNotificationTextBox.Text += " {Debt}";
-            AutoNotificationTextBox.CaretIndex = AutoNotificationTextBox.Text.Length;
-            AutoNotificationTextBox.Focus();
-        }
-
-        // Сохранение настроек автоотправки
+        // Сохранение авторассылки
         private void SaveAutoNotificationText_Click(object sender, RoutedEventArgs e)
         {
             if (AutoNotificationDatePicker.SelectedDate == null)
             {
-                MessageBox.Show("Выберите число месяца для автоотправки.",
-                                "Внимание", MessageBoxButton.OK, MessageBoxImage.Warning);
+                Xceed.Wpf.Toolkit.MessageBox.Show("Выберите число месяца.", "Внимание",
+                                MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
-
-            int day = AutoNotificationDatePicker.SelectedDate.Value.Day;
-
-            if (!(AutoNotificationTimeBox.SelectedItem is ComboBoxItem cbo))
+            if (AutoNotificationTimePicker.Value == null)
             {
-                MessageBox.Show("Выберите время отправки.",
-                                "Внимание", MessageBoxButton.OK, MessageBoxImage.Warning);
+                Xceed.Wpf.Toolkit.MessageBox.Show("Выберите время.", "Внимание",
+                                MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
-            string time = (string)cbo.Content;
-            string message = AutoNotificationTextBox.Text.Trim();
 
             var cfg = new AutoSendSettings
             {
                 Enabled = AutoSendEnabledCheckBox.IsChecked == true,
-                Time = time,
-                MessageText = message,
-                ScheduledDay = day
+                ScheduledDay = AutoNotificationDatePicker.SelectedDate.Value.Day,
+                Time = AutoNotificationTimePicker.Value.Value.ToString("HH:mm"),
+                SubjectTemplate = AutoNotificationSubjectTextBox.Text.Trim(),
+                BodyTemplate = AutoNotificationBodyTextBox.Text.Trim()
             };
 
             Directory.CreateDirectory(Path.GetDirectoryName(autoConfigPath)!);
             File.WriteAllText(autoConfigPath,
                 JsonSerializer.Serialize(cfg, new JsonSerializerOptions { WriteIndented = true }));
 
-            MessageBox.Show("Настройки автоотправки сохранены.",
+            Xceed.Wpf.Toolkit.MessageBox.Show("Настройки авторассылки сохранены.",
                             "Готово", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
-        // Сохранение настроек email-отправителя
+        // Теги
+        private void InsertNameTag_Auto_Click(object sender, RoutedEventArgs e)
+        {
+            AutoNotificationBodyTextBox.Text += " {Name}";
+            AutoNotificationBodyTextBox.CaretIndex = AutoNotificationBodyTextBox.Text.Length;
+            AutoNotificationBodyTextBox.Focus();
+        }
+
+        private void InsertDebtTag_Auto_Click(object sender, RoutedEventArgs e)
+        {
+            AutoNotificationBodyTextBox.Text += " {Debt}";
+            AutoNotificationBodyTextBox.CaretIndex = AutoNotificationBodyTextBox.Text.Length;
+            AutoNotificationBodyTextBox.Focus();
+        }
+
+        // Сохранение email‑настроек
         private void SaveEmailButton_Click(object sender, RoutedEventArgs e)
         {
             var email = SenderEmailBox.Text.Trim();
             var pwd = SenderPasswordBox.Password;
             var readPwd = ReadPasswordBox.Password;
 
-            if (string.IsNullOrWhiteSpace(email) ||
-                string.IsNullOrWhiteSpace(pwd) ||
-                string.IsNullOrWhiteSpace(readPwd))
+            if (string.IsNullOrWhiteSpace(email)
+             || string.IsNullOrWhiteSpace(pwd)
+             || string.IsNullOrWhiteSpace(readPwd))
             {
-                MessageBox.Show("Пожалуйста, заполните все поля.", "Ошибка",
+                Xceed.Wpf.Toolkit.MessageBox.Show("Заполните все поля.", "Ошибка",
                                 MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
-            SaveSenderSettings(email, pwd, readPwd);
-        }
 
-        private void SaveSenderSettings(string email, string pwd, string readPwd)
-        {
             var senderPath = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                 "FinTrack", "sender.json");
@@ -199,32 +187,31 @@ namespace FinTrack.Pages
             File.WriteAllText(senderPath,
                 JsonSerializer.Serialize(cfg, new JsonSerializerOptions { WriteIndented = true }));
 
-            // Применяем к панели сообщений сразу
-            if (Application.Current.MainWindow is MainWindow main &&
-                main.FindName("MainContentPanel") is ContentControl ctrl &&
-                ctrl.Content is MessagesPanel mp)
+            // Применяем к панели сообщений
+            if (Application.Current.MainWindow is MainWindow main
+             && main.FindName("MainContentPanel") is ContentControl ctrl
+             && ctrl.Content is MessagesPanel mp)
             {
                 mp.ApplySenderSettings(email, pwd, readPwd);
             }
 
-            MessageBox.Show("Настройки email сохранены и применены.", "Готово",
+            Xceed.Wpf.Toolkit.MessageBox.Show("Настройки email сохранены.", "Готово",
                             MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
-        // Класс настроек приложения
         private class AppSettings
         {
             public string Language { get; set; } = "ru";
         }
     }
 
-    // Модель настроек автоотправки
+    // Модель авторассылки
     public class AutoSendSettings
     {
         public bool Enabled { get; set; }
-        public string Time { get; set; } = "09:00";  // формат HH:mm
-        public string MessageText { get; set; } =
-            "Здравствуйте! У вас есть задолженность.";
-        public int ScheduledDay { get; set; } = 1;       // день месяца
+        public string Time { get; set; } = "09:00";
+        public int ScheduledDay { get; set; } = 1;
+        public string SubjectTemplate { get; set; } = "Просроченная задолженность";
+        public string BodyTemplate { get; set; } = "Здравствуйте, {Name}! У вас задолженность {Debt} ₽.";
     }
 }

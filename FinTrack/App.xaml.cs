@@ -3,8 +3,10 @@ using System;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Resources;
 using System.Windows.Threading;
-using FinTrack.Models;
+using FinTrack.Services;    // для AutoNotifier
+using FinTrack.Pages;       // для MainWindow
 
 namespace FinTrack
 {
@@ -12,70 +14,70 @@ namespace FinTrack
     {
         private TaskbarIcon? _trayIcon;
         private DispatcherTimer autoSendTimer;
-      
+
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
 
-            // 1. Загружаем язык
-            //Pages.SettingsPanel.AppInitializer.LoadLanguageFromConfig();
-
-            // 2. Трей-иконка
+            // 1) Инициализация трей‑иконки из встроенного ресурса
             InitTrayIcon();
 
-            // 3. Автоотправка уведомлений по таймеру
+            // 2) Запускаем таймер автоотправки
             autoSendTimer = new DispatcherTimer
             {
                 Interval = TimeSpan.FromMinutes(1)
             };
-            autoSendTimer.Tick += (_, _) => Services.AutoNotifier.TryAutoSend();
+            autoSendTimer.Tick += (_, _) => AutoNotifier.TryAutoSend();
             autoSendTimer.Start();
 
-            // 4. Главное окно
+            // 3) Создаём и показываем главное окно (с возможностью сворачивать в трей)
             MainWindow = new MainWindow();
             MainWindow.Closing += (s, args) =>
             {
                 args.Cancel = true;
-                MainWindow.Hide(); // свернуть в трей
+                MainWindow.Hide();
             };
             MainWindow.Show();
         }
 
         private void InitTrayIcon()
         {
-            // Ищем icon.ico в папке Themes/Images рядом с EXE
-            var baseDir = AppDomain.CurrentDomain.BaseDirectory;
-            var projectDir = Directory.GetParent(baseDir)   // …\bin\Debug\netX
-                         .Parent              // …\bin\Debug
-                         .Parent              // …\bin
-                         .Parent              // (если нужно) …\yourProjectFolder
-                         .FullName;
-            var iconPath = Path.Combine(
-     projectDir,
-     "Themes",
-     "Images",
-     "icon.ico");
-            if (!File.Exists(iconPath))
+            try
             {
-                MessageBox.Show($"Не найден файл трей-иконки:\n{iconPath}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                Shutdown();
-                return;
-            }
+                // Pack URI к ресурсу icon.ico (Build Action = Resource)
+                var uri = new Uri("pack://application:,,,/FinTrack;component/Themes/Images/icon.ico", UriKind.Absolute);
 
-            _trayIcon = new TaskbarIcon
-            {
-                Icon = new System.Drawing.Icon(iconPath),
-                ToolTipText = "FinTrack работает в фоне"
-            };
+                // Получаем поток из ресурса
+                StreamResourceInfo sri = Application.GetResourceStream(uri);
+                if (sri == null)
+                    throw new FileNotFoundException("Ресурс icon.ico не найден внутри сборки.", uri.ToString());
 
-            _trayIcon.ContextMenu = new ContextMenu
-            {
-                Items =
+                // Создаём TaskbarIcon из потока
+                using (var iconStream = sri.Stream)
                 {
-                    new MenuItem { Header = "Открыть", Command = new RelayCommand(_ => ShowMainWindow()) },
-                    new MenuItem { Header = "Выход",   Command = new RelayCommand(_ => ExitApp()) }
+                    _trayIcon = new TaskbarIcon
+                    {
+                        Icon = new System.Drawing.Icon(iconStream),
+                        ToolTipText = "FinTrack работает в фоне"
+                    };
                 }
-            };
+
+                // Контекстное меню
+                _trayIcon.ContextMenu = new ContextMenu
+                {
+                    Items =
+                    {
+                        new MenuItem { Header = "Открыть", Command = new RelayCommand(_ => ShowMainWindow()) },
+                        new MenuItem { Header = "Выход",   Command = new RelayCommand(_ => ExitApp()) }
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Не удалось инициализировать трей‑иконку:\n" + ex.Message,
+                                "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                Shutdown();
+            }
         }
 
         private void ShowMainWindow()

@@ -42,5 +42,7 @@ namespace FinTrack.Views
         public string InvoiceFileName => HasInvoice
             ? Path.GetFileName(InvoiceFilePath)
             : "(нет PDF)";
+
+
     }
 }

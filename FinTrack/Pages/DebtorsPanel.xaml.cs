@@ -12,6 +12,8 @@ using System.Windows.Controls;
 using FinTrack.Properties;
 using System.ComponentModel;
 using ClosedXML.Excel;
+using System.Windows.Input;
+using System.Windows.Media;
 
 namespace FinTrack.Pages
 {
@@ -174,32 +176,55 @@ namespace FinTrack.Pages
 
         private void UploadInvoice_Click(object sender, RoutedEventArgs e)
         {
-            var selectedDebtor = DebtorsGrid.SelectedItem as Debtor;
-            if (selectedDebtor == null)
+            // Собираем всех выделенных должников
+            var selectedDebtors = DebtorsGrid.SelectedItems
+                .Cast<Debtor>()
+                .ToList();
+
+            if (selectedDebtors.Count == 0)
             {
-                MessageBox.Show("Выберите должника для загрузки инвойса.");
+                MessageBox.Show("Выберите хотя бы одного должника, чтобы загрузить ему инвойс.",
+                                "Внимание", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            var dialog = new OpenFileDialog
+            // Открываем диалог выбора PDF
+            var dlg = new OpenFileDialog
             {
-                Filter = "PDF Files (*.pdf)|*.pdf",
-                Title = "Выберите PDF-инвойс"
+                Filter = "PDF файлы (*.pdf)|*.pdf",
+                Title = selectedDebtors.Count == 1
+                    ? "Выберите PDF-инвойс"
+                    : $"Выберите PDF-инвойс для {selectedDebtors.Count} должников"
             };
 
-            if (dialog.ShowDialog() == true)
+            if (dlg.ShowDialog() != true)
+                return;
+
+            // Копируем файл в общую папку и привязываем к каждому
+            Directory.CreateDirectory(invoicesDir);
+            var originalName = Path.GetFileName(dlg.FileName);
+
+            foreach (var debtor in selectedDebtors)
             {
-                Directory.CreateDirectory(invoicesDir);
-                var fileName = Path.GetFileName(dialog.FileName);
-                var targetPath = Path.Combine(invoicesDir, $"{selectedDebtor.Name}_{fileName}");
+                // Формируем уникальное имя на основе имени должника
+                var targetName = $"{debtor.Name}_{originalName}";
+                var targetPath = Path.Combine(invoicesDir, targetName);
 
-                File.Copy(dialog.FileName, targetPath, true);
-                selectedDebtor.InvoiceFilePath = targetPath;
-                SaveDebtors();
-
-                MessageBox.Show("Инвойс успешно привязан.");
+                File.Copy(dlg.FileName, targetPath, overwrite: true);
+                debtor.InvoiceFilePath = targetPath;
             }
+
+            // Сохраняем все изменения
+            SaveDebtors();
+            DebtorsGrid.Items.Refresh();
+
+            MessageBox.Show(
+                selectedDebtors.Count == 1
+                    ? "Инвойс успешно привязан к выбранному должнику."
+                    : $"Инвойс успешно привязан к {selectedDebtors.Count} должникам.",
+                "Готово", MessageBoxButton.OK, MessageBoxImage.Information);
         }
+
 
         private void SaveDebtors()
         {
@@ -238,52 +263,86 @@ namespace FinTrack.Pages
                 Debtors.Add(d);
         }
 
+        private void DebtorsGrid_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            // Ищем внешний ScrollViewer (тот, что вокруг всего UserControl)
+            var scroll = FindVisualParent<ScrollViewer>((DependencyObject)sender);
+            if (scroll != null)
+            {
+                scroll.ScrollToVerticalOffset(scroll.VerticalOffset - e.Delta);
+                e.Handled = true;
+            }
+        }
+
+        // Универсальный метод поиска родителя в визуальном дереве
+        private static T FindVisualParent<T>(DependencyObject child) where T : DependencyObject
+        {
+            DependencyObject parent = child;
+            while (parent != null && parent is not T)
+            {
+                parent = VisualTreeHelper.GetParent(parent);
+            }
+            return parent as T;
+        }
         private void ImportFromExcel_Click(object sender, RoutedEventArgs e)
         {
-            var dialog = new OpenFileDialog
+            var dlg = new OpenFileDialog
             {
                 Filter = "Excel файлы (*.xlsx)|*.xlsx",
                 Title = "Выберите Excel-файл"
             };
 
-            if (dialog.ShowDialog() == true)
+            if (dlg.ShowDialog() != true) return;
+
+            ObservableCollection<Debtor> tempList = new();
+            try
             {
-                try
+                using var workbook = new XLWorkbook(dlg.FileName);
+                var sheet = workbook.Worksheets.First();
+                for (int i = 2; i <= sheet.LastRowUsed().RowNumber(); i++)
                 {
-                    using var workbook = new XLWorkbook(dialog.FileName);
-                    var sheet = workbook.Worksheets.First();
-
-                    for (int i = 2; i <= sheet.LastRowUsed().RowNumber(); i++)
+                    var row = sheet.Row(i);
+                    var loaded = new Debtor
                     {
-                        var row = sheet.Row(i);
-
-                        var totalDebt = decimal.TryParse(row.Cell(4).GetValue<string>(), out var d) ? d : 0;
-                        var paid = decimal.TryParse(row.Cell(5).GetValue<string>(), out var p) ? p : 0;
-
-                        var debtor = new Debtor
-                        {
-                            Name = row.Cell(1).GetValue<string>(),
-                            Email = row.Cell(2).GetValue<string>(),
-                            Phone = row.Cell(3).GetValue<string>(),
-                            TotalDebt = totalDebt,
-                            Paid = paid,
-                            DueDate = DateTime.TryParse(row.Cell(6).GetValue<string>(), out var date) ? date : DateTime.Today,
-                            InvoiceFilePath = row.Cell(7).GetValue<string>()
-                        };
-
-                        Debtors.Add(debtor);
-                    }
-
-                    SaveDebtors();
-                    SortDebtors();
-                    MessageBox.Show("Должники успешно загружены из Excel.", "Готово", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Ошибка при импорте Excel: " + ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                        Name = row.Cell(1).GetValue<string>(),
+                        Email = row.Cell(2).GetValue<string>(),
+                        Phone = row.Cell(3).GetValue<string>(),
+                        TotalDebt = decimal.TryParse(row.Cell(4).GetString(), out var d) ? d : 0,
+                        Paid = decimal.TryParse(row.Cell(5).GetString(), out var p) ? p : 0,
+                        DueDate = DateTime.TryParse(row.Cell(6).GetString(), out var dt) ? dt : DateTime.Today,
+                        InvoiceFilePath = row.Cell(7).GetValue<string>()
+                    };
+                    tempList.Add(loaded);
                 }
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ошибка импорта Excel: " + ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            // Если есть что обрабатывать — открываем окно с импортом
+            if (tempList.Count > 0)
+            {
+                var window = new ImportedDebtorsWindow(tempList);
+                if (window.ShowDialog() == true)
+                {
+                    // По «Подтвердить» добавляем всех в основную коллекцию
+                    foreach (var d in tempList)
+                    {
+                        Debtors.Add(d);
+                    }
+                    SaveDebtors();
+                    SortDebtors();
+                    MessageBox.Show("Должники из Excel добавлены.", "Готово", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            else
+            {
+                MessageBox.Show("В файле нет записей для импорта.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
         }
+
 
 
 
