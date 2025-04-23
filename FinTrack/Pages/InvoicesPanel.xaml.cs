@@ -9,7 +9,7 @@ using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Win32;
 using FinTrack.Views;
-using FinTrack.Models;
+using FinTrack.Services;
 
 namespace FinTrack.Controls
 {
@@ -79,6 +79,7 @@ namespace FinTrack.Controls
                 {
                     MessageBox.Show($"Ошибка при открытии файла: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
+                AuditLogger.Log($"Открыт инвойс '{row.FileName}' для клиента {row.Name}");
             }
         }
 
@@ -123,6 +124,7 @@ namespace FinTrack.Controls
                     debtor.InvoiceFilePath = newPath;
                     SaveDebtors();
                     LoadDebtors();
+                    AuditLogger.Log($"Инвойс для {debtor.Name} заменён");
                 }
             }
         }
@@ -137,6 +139,8 @@ namespace FinTrack.Controls
                     debtor.InvoiceFilePath = string.Empty;
                     SaveDebtors();
                     LoadDebtors();
+                    AuditLogger.Log($"Инвойс удалён для клиента {debtor.Name}");
+
                 }
             }
         }

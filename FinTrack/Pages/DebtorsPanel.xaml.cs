@@ -14,6 +14,7 @@ using System.ComponentModel;
 using ClosedXML.Excel;
 using System.Windows.Input;
 using System.Windows.Media;
+using FinTrack.Services;
 
 namespace FinTrack.Pages
 {
@@ -71,6 +72,7 @@ namespace FinTrack.Pages
             };
 
             Debtors.Add(debtor);
+            AuditLogger.Log($"Добавлен должник: {debtor.Name}");
             AddDebtorModal.Visibility = Visibility.Collapsed;
             ClearInputs();
             SaveDebtors();
@@ -100,9 +102,12 @@ namespace FinTrack.Pages
             if (MessageBox.Show("Удалить выбранных должников?", "Подтверждение", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
             {
                 foreach (var debtor in selected)
+                {
                     Debtors.Remove(debtor);
-
+                    AuditLogger.Log($"Удалён должник: {debtor.Name}");
+                }
                 SaveDebtors();
+
             }
         }
 
@@ -115,30 +120,31 @@ namespace FinTrack.Pages
                 return;
             }
 
-            var statusWindow = new ChangeStatusWindow(); // окно выбора статуса
+            var statusWindow = new ChangeStatusWindow();
             if (statusWindow.ShowDialog() == true)
             {
-                string selectedStatus = statusWindow.SelectedStatus;
+                string newStatus = statusWindow.SelectedStatus;
 
-                if (selectedStatus == "Оплачено")
+                foreach (var d in selected)
                 {
-                    foreach (var debtor in selected)
-                        debtor.Paid = debtor.TotalDebt;
-                }
-                else if (selectedStatus == "Не оплачено")
-                {
-                    foreach (var debtor in selected)
-                        debtor.Paid = 0;
-                }
-                else if (selectedStatus == "Частично оплачено")
-                {
-                    foreach (var debtor in selected)
+                    if (newStatus == "Оплачено")
                     {
-                        var partialWindow = new PartialPaymentWindow(debtor.Name);
+                        d.Paid = d.TotalDebt;
+                        AuditLogger.Log($"Статус должника {d.Name} => Оплачено");
+                    }
+                    else if (newStatus == "Не оплачено")
+                    {
+                        d.Paid = 0;
+                        AuditLogger.Log($"Статус должника {d.Name} => Не оплачено");
+                    }
+                    else if (newStatus == "Частично оплачено")
+                    {
+                        var partialWindow = new PartialPaymentWindow(d.Name);
                         if (partialWindow.ShowDialog() == true)
                         {
                             var amount = partialWindow.EnteredAmount;
-                            debtor.Paid = Math.Min(debtor.Paid + amount, debtor.TotalDebt);
+                            d.Paid = Math.Min(d.Paid + amount, d.TotalDebt);
+                            AuditLogger.Log($"Статус должника {d.Name} => Частично оплачено (+{amount:0.00})");
                         }
                     }
                 }
@@ -148,6 +154,7 @@ namespace FinTrack.Pages
                 SortDebtors();
             }
         }
+
 
 
         private void SelectAll_Click(object sender, RoutedEventArgs e)
@@ -212,6 +219,9 @@ namespace FinTrack.Pages
 
                 File.Copy(dlg.FileName, targetPath, overwrite: true);
                 debtor.InvoiceFilePath = targetPath;
+                AuditLogger.Log($"Инвойс '{originalName}' привязан к {debtor.Name}");
+
+
             }
 
             // Сохраняем все изменения
@@ -331,6 +341,8 @@ namespace FinTrack.Pages
                     foreach (var d in tempList)
                     {
                         Debtors.Add(d);
+                        AuditLogger.Log($"Импортирован должник из Excel: {d.Name}");
+
                     }
                     SaveDebtors();
                     SortDebtors();

@@ -23,6 +23,7 @@ using Task = System.Threading.Tasks.Task;
 using System.Windows.Input;
 using System.Collections.ObjectModel;
 using System.Threading;
+using FinTrack.Services;
 
 
 
@@ -55,6 +56,7 @@ namespace FinTrack.Controls
 
 
         private DispatcherTimer refreshTimer;
+
 
         public MessagesPanel()
         {
@@ -90,13 +92,14 @@ namespace FinTrack.Controls
 
         private async Task LoadMessagesAsync()
         {
+            AuditLogger.Log("LoadMessagesAsync: старт загрузки писем");
             ShowLoading(true);
-
             try
             {
                 if (string.IsNullOrWhiteSpace(senderEmail) || string.IsNullOrWhiteSpace(readPassword))
                 {
                     StatusTextBlock.Text = "⚠️ Нет данных для чтения почты.";
+                    AuditLogger.Log("LoadMessagesAsync: пропущено — нет данных для чтения почты");
                     return;
                 }
 
@@ -151,14 +154,18 @@ namespace FinTrack.Controls
                     MessagesListBox.ItemsSource = allMessages;
                     StatusTextBlock.Text = $"✅ Найдено непрочитанных: {allMessages.Count}";
                 });
+
+                AuditLogger.Log($"LoadMessagesAsync: успешно загружено {allMessages.Count} непрочитанных писем");
             }
             catch (Exception ex)
             {
                 StatusTextBlock.Text = $"❌ Ошибка IMAP: {ex.Message}";
+                AuditLogger.Log($"LoadMessagesAsync: ошибка — {ex.Message}");
             }
             finally
             {
                 ShowLoading(false);
+                AuditLogger.Log("LoadMessagesAsync: завершение загрузки писем");
             }
         }
 
@@ -228,8 +235,8 @@ namespace FinTrack.Controls
                 return;
             }
 
+            AuditLogger.Log($"ReplyButton_Click: попытка ответа на письмо от {selected.From} (UID={selected.Uid})");
             SendingOverlay.Visibility = Visibility.Visible;
-
             try
             {
                 var reply = new MimeMessage();
@@ -274,14 +281,13 @@ namespace FinTrack.Controls
 
                 // Удалить из списка UI
                 allMessages.Remove(selected);
-
+                AuditLogger.Log($"ReplyButton_Click: ответ отправлен на {selected.From}, тема «{selected.Subject}»");
                 MessageBox.Show("Ответ отправлен.");
-                ReplyTextBox.Clear();
-                ReplyPdfFileNameTextBlock.Text = "(файл не выбран)";
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Ошибка отправки: " + ex.Message);
+                AuditLogger.Log($"ReplyButton_Click: ошибка отправки — {ex.Message}");
             }
             finally
             {
@@ -293,19 +299,21 @@ namespace FinTrack.Controls
 
         private void SendNotification_Click(object sender, RoutedEventArgs e)
         {
+            AuditLogger.Log("SendNotification_Click: ручная рассылка уведомлений — начало");
 
             if (string.IsNullOrWhiteSpace(senderEmail) || string.IsNullOrWhiteSpace(sendPassword))
             {
                 MessageBox.Show("Настройки отправителя не заполнены.");
+                AuditLogger.Log("SendNotification_Click: отменено — нет настроек отправителя");
                 return;
             }
 
             var text = MessageTextBox.Text.Trim();
             var selected = RecipientsListBox.SelectedItems.Cast<Debtor>().ToList();
-
             if (string.IsNullOrWhiteSpace(text) || selected.Count == 0)
             {
                 MessageBox.Show("Введите текст и выберите получателей.");
+                AuditLogger.Log("SendNotification_Click: отменено — нет текста или нет получателей");
                 return;
             }
 
@@ -343,24 +351,33 @@ namespace FinTrack.Controls
                     // пауза 3 секунды перед отправкой следующего письма
                     Thread.Sleep(3000);
                 }
-
-
-
+                AuditLogger.Log($"SendNotification_Click: уведомления отправлены {selected.Count} должникам");
                 MessageBox.Show("Уведомления отправлены.");
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Ошибка отправки: " + ex.Message);
+                AuditLogger.Log($"SendNotification_Click: ошибка рассылки — {ex.Message}");
             }
         }
 
         private void AutoSendNotifications()
         {
-            if (!IsAutoSendDay() || WasAlreadySentThisMonth()) return;
-            if (string.IsNullOrWhiteSpace(senderEmail) || string.IsNullOrWhiteSpace(sendPassword)) return;
+            AuditLogger.Log("AutoSendNotifications: проверка автосенд-дня");
+            if (!IsAutoSendDay() || WasAlreadySentThisMonth())
+            {
+                AuditLogger.Log("AutoSendNotifications: не день автосенд или уже отправлено в этом месяце");
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(senderEmail) || string.IsNullOrWhiteSpace(sendPassword))
+            {
+                AuditLogger.Log("AutoSendNotifications: отменено — нет настроек отправителя");
+                return;
+            }
 
             try
             {
+                
                 var smtp = new SmtpClient("smtp.gmail.com", 587)
                 {
                     Credentials = new NetworkCredential(senderEmail, sendPassword),
@@ -368,6 +385,7 @@ namespace FinTrack.Controls
                 };
 
                 var overdue = AllDebtors.Where(d => d.TotalDebt > d.Paid && d.DueDate < DateTime.Today).ToList();
+                AuditLogger.Log($"AutoSendNotifications: найдены {overdue.Count} просроченных должников");
 
                 foreach (var debtor in overdue)
                 {
@@ -391,15 +409,15 @@ namespace FinTrack.Controls
                     Month = DateTime.Today.Month,
                     DateSent = DateTime.Now
                 };
-
                 File.WriteAllText(logPath, JsonSerializer.Serialize(log, new JsonSerializerOptions { WriteIndented = true }));
 
-
+                AuditLogger.Log("AutoSendNotifications: автосообщения успешно отправлены");
                 MessageBox.Show("Автоуведомления отправлены.");
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Ошибка автоотправки: " + ex.Message);
+                AuditLogger.Log($"AutoSendNotifications: ошибка — {ex.Message}");
             }
         }
 
