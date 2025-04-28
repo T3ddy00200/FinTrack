@@ -4,11 +4,6 @@ using System.Windows;
 using System.Windows.Controls;
 using FinTrack.Controls;
 using FinTrack.Pages;
-using FinTrack.Properties;
-using FinTrack.Models;
-using static FinTrack.Pages.SettingsPanel;
-using MailMessage = System.Net.Mail.MailMessage;
-using MailAddress = System.Net.Mail.MailAddress;
 
 namespace FinTrack
 {
@@ -19,30 +14,43 @@ namespace FinTrack
 
         public MainWindow()
         {
-            var savedLang = Settings.Default.Language;
-            LocalizationManager.SetCulture(savedLang);
-            //AppInitializer.LoadLanguageFromConfig();
-
             InitializeComponent();
             StateChanged += MainWindow_StateChanged;
             Closing += MainWindow_Closing;
-            LocalizationManager.LocalizeUI(this);
 
-            string startPage = Settings.Default.StartPage;
-            SectionTitle.Text = LocalizationManager.GetStringByKey(startPage);
+            // Load start page key (now stored as English: "Home", "Debtors", etc.)
+            string startPage = Properties.Settings.Default.StartPage;
+
+            // Show the section title and initial panel
+            SectionTitle.Text = startPage;
             MainContentPanel.Content = CreatePanelByKey(startPage);
 
-            // если стартовая панель — Сообщения, сразу загружаем письма
-            if (startPage == "Сообщения")
+            // If start page is Messages, immediately load emails
+            if (startPage == "Messages")
                 _ = _messagesPanel.LoadMessagesIfConfiguredAsync();
         }
+
         protected override void OnStateChanged(EventArgs e)
         {
             if (WindowState == WindowState.Minimized)
             {
-                Hide(); // Скрываем окно
+                Hide();
             }
             base.OnStateChanged(e);
+        }
+
+        private void MainWindow_StateChanged(object sender, EventArgs e)
+        {
+            if (WindowState == WindowState.Minimized)
+            {
+                Hide();
+                ShowInTaskbar = true;
+            }
+        }
+
+        private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            // optional: save settings or log
         }
 
         private void ThemeToggleButton_Click(object sender, RoutedEventArgs e)
@@ -58,42 +66,27 @@ namespace FinTrack
             {
                 Source = new Uri(themePath, UriKind.Relative)
             };
-
             var existing = Application.Current.Resources.MergedDictionaries
                 .FirstOrDefault(d => d.Source != null && d.Source.OriginalString.Contains("Theme"));
             if (existing != null)
                 Application.Current.Resources.MergedDictionaries.Remove(existing);
-
             Application.Current.Resources.MergedDictionaries.Add(dict);
-        }
-
-        private void MainWindow_StateChanged(object sender, EventArgs e)
-        {
-            if (WindowState == WindowState.Minimized)
-            {
-                Hide();
-                ShowInTaskbar = true;
-            }
-        }
-
-        private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
-        {
-            // можно логировать или сохранять настройки при закрытии
         }
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            LocalizationManager.LocalizeUI(this);
+            // nothing to do here any more
         }
 
         private async void Menu_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button button && button.Tag is string tag)
             {
-                SectionTitle.Text = LocalizationManager.GetStringByKey(button.Name);
+                // Tag now holds "Home", "Debtors", etc.
+                SectionTitle.Text = tag;
                 MainContentPanel.Content = CreatePanelByKey(tag);
 
-                if (tag == "Сообщения")
+                if (tag == "Messages")
                 {
                     await _messagesPanel.LoadMessagesIfConfiguredAsync();
                 }
@@ -102,17 +95,15 @@ namespace FinTrack
 
         private UserControl CreatePanelByKey(string tag) => tag switch
         {
-            "Главная" => new DashboardPanel(),
-            "Должники" => new DebtorsPanel(),
-            "Инвойсы" => new InvoicesPanel(),
-            "Отчёты" => new ReportsPanel(),
-            "Сообщения" => _messagesPanel,
-            "Безопасность" => new SecurityPanel(),
-            "Настройки" => new SettingsPanel(),
-            "Пользователи" => new UsersPanel(),
+            "Home" => new DashboardPanel(),
+            "Debtors" => new DebtorsPanel(),
+            "Invoices" => new InvoicesPanel(),
+            "Reports" => new ReportsPanel(),
+            "Messages" => _messagesPanel,
+            "Security" => new SecurityPanel(),
+            "Settings" => new SettingsPanel(),
+            "Users" => new UsersPanel(),
             _ => new DashboardPanel()
         };
-
-       
     }
 }

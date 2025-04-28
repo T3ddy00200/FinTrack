@@ -12,13 +12,14 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="20">
 
-            <TextBlock Text="Инвойсы"
+            <!-- Header -->
+            <TextBlock Text="Invoices"
                        FontSize="24"
                        FontWeight="Bold"
                        Foreground="{DynamicResource TextBrush}"
                        Margin="0,0,0,20"/>
 
-            <!-- Поиск -->
+            <!-- Search box -->
             <Grid Width="300" Margin="0,0,0,15">
                 <TextBox x:Name="SearchBox"
                          FontSize="14"
@@ -28,7 +29,7 @@
                          BorderBrush="{DynamicResource BorderBrush}"
                          TextChanged="SearchBox_TextChanged"/>
 
-                <TextBlock Text="Поиск по клиенту или PDF..."
+                <TextBlock Text="Search by client or PDF..."
                            Foreground="{DynamicResource SubTextBrush}"
                            FontSize="13"
                            Margin="12,5,0,0"
@@ -47,9 +48,9 @@
                 </TextBlock>
             </Grid>
 
-            <!-- Таблица инвойсов -->
+            <!-- Invoices table -->
             <DataGrid x:Name="InvoicesGrid"
-                       IsReadOnly="True"
+                      IsReadOnly="True"
                       SelectionMode="Extended"
                       SelectionUnit="FullRow"
                       AutoGenerateColumns="False"
@@ -80,12 +81,16 @@
                 </DataGrid.ColumnHeaderStyle>
 
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Компания" Binding="{Binding Name}" Width="2*"/>
+                    <!-- Company column -->
+                    <DataGridTextColumn Header="Company"
+                                        Binding="{Binding Name}"
+                                        Width="2*"/>
 
-                    <DataGridTemplateColumn Header="Инвойс (PDF)" Width="2*">
+                    <!-- PDF Invoice column -->
+                    <DataGridTemplateColumn Header="Invoice (PDF)" Width="2*">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <Button Content="Открыть"
+                                <Button Content="Open"
                                         Padding="6,2"
                                         Margin="2,0"
                                         Background="{DynamicResource HoverBrush}"
@@ -98,17 +103,18 @@
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
 
-                    <DataGridTemplateColumn Header="Действия" Width="2*">
+                    <!-- Actions column -->
+                    <DataGridTemplateColumn Header="Actions" Width="2*">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <Button Content="Изменить"
+                                    <Button Content="Replace"
                                             Margin="5,0"
                                             Padding="8,2"
                                             Click="ReplaceInvoice_Click"
                                             Background="{DynamicResource HoverBrush}"
                                             Foreground="{DynamicResource TextBrush}"/>
-                                    <Button Content="Удалить"
+                                    <Button Content="Delete"
                                             Margin="5,0"
                                             Padding="8,2"
                                             Click="DeleteInvoice_Click"

@@ -1,27 +1,82 @@
 ﻿<UserControl x:Class="FinTrack.Controls.UsersPanel"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             mc:Ignorable="d" 
-             d:DesignHeight="600" d:DesignWidth="900"
              Background="{DynamicResource BackgroundBrush}"
-              Loaded="UserControl_Loaded">
+             Loaded="UserControl_Loaded"
+             MinHeight="400" MinWidth="600">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="20">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-            <TextBlock Text="Пользователи"
-                       FontSize="24"
-                       FontWeight="Bold"
-                       Foreground="{DynamicResource TextBrush}"
-                       Margin="0,0,0,20"/>
+        <!-- Header -->
+        <TextBlock Text="Users"
+               FontSize="24"
+               FontWeight="Bold"
+               Foreground="{DynamicResource TextBrush}"
+               Margin="0,0,0,20"/>
 
-            <Border Background="{DynamicResource PanelBackgroundBrush}" Padding="20" CornerRadius="4">
-                <TextBlock Text="Здесь будет список пользователей и их роли."
-                           Foreground="{DynamicResource SubTextBrush}"/>
-            </Border>
-
+        <!-- Action buttons -->
+        <StackPanel Grid.Row="1"
+                Orientation="Horizontal"
+                Margin="30,0,0,10"
+                    Width="Auto"
+                HorizontalAlignment="Left">
+            <Button Content="Add User"
+              Width="100" Height="30"
+              Background="{DynamicResource AccentBrush}"
+              Foreground="White"/>
+            <Button Content="Edit User"
+              Width="100" Height="30"
+              Background="{DynamicResource HoverBrush}"
+              Foreground="{DynamicResource TextBrush}"/>
+            <Button Content="Delete User"
+              Width="100" Height="30"
+              Background="{DynamicResource DangerBrush}"
+              Foreground="White"/>
         </StackPanel>
-    </ScrollViewer>
+
+        <!-- Users table -->
+        <DataGrid Grid.Row="2"
+              x:Name="UsersGrid"
+              AutoGenerateColumns="False"
+              CanUserAddRows="False"
+              CanUserDeleteRows="False"
+              CanUserReorderColumns="False"
+              CanUserSortColumns="True"
+              SelectionMode="Extended"
+              HeadersVisibility="Column"
+              RowBackground="{DynamicResource BackgroundBrush}"
+              AlternatingRowBackground="{DynamicResource PanelBackgroundBrush}"
+              Background="{DynamicResource PanelBackgroundBrush}"
+              Foreground="{DynamicResource TextBrush}"
+              BorderBrush="{DynamicResource BorderBrush}"
+              GridLinesVisibility="Horizontal">
+
+            <DataGrid.ColumnHeaderStyle>
+                <Style TargetType="DataGridColumnHeader">
+                    <Setter Property="Background" Value="{DynamicResource HoverBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                </Style>
+            </DataGrid.ColumnHeaderStyle>
+
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Username"
+                            Binding="{Binding Username}"
+                            Width="2*"/>
+                <DataGridTextColumn Header="Email"
+                            Binding="{Binding Email}"
+                            Width="3*"/>
+                <DataGridTextColumn Header="Role"
+                            Binding="{Binding Role}"
+                            Width="2*"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
 </UserControl>

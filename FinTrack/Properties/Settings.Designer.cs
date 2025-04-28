@@ -46,5 +46,43 @@ namespace FinTrack.Properties {
                 this["StartPage"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://<your-resource-name>.openai.azure.com/")]
+        public string OpenAiEndpoint {
+            get {
+                return ((string)(this["OpenAiEndpoint"]));
+            }
+            set {
+                this["OpenAiEndpoint"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("chatgpt-deployment")]
+        public string OpenAiDeploymentName {
+            get {
+                return ((string)(this["OpenAiDeploymentName"]));
+            }
+            set {
+                this["OpenAiDeploymentName"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("sk-proj-xqroZNVUmMvh7iY-uxJPWEf1d5h7Fm72ki7cmjjZvov6IJk6pcEcjbeKgUe5MHylKCUDDt1Jl" +
+            "cT3BlbkFJoVq4cPttoCGExyfulxBri9M6buluF0YLK1ZFxwypabt00D3mLzgozXKqH27n6SP_uY4VGNW" +
+            "38A")]
+        public string OpenAiApiKey {
+            get {
+                return ((string)(this["OpenAiApiKey"]));
+            }
+            set {
+                this["OpenAiApiKey"] = value;
+            }
+        }
     }
 }

@@ -27,6 +27,7 @@ namespace FinTrack.Windows
         }
 
         // Нажали 📎 — привязать PDF к конкретному Debtor
+        // ImportedDebtorsWindow.xaml.cs
         private void AttachInvoice_Click(object sender, RoutedEventArgs e)
         {
             if ((sender as Button)?.DataContext is not Debtor debtor) return;
@@ -34,7 +35,8 @@ namespace FinTrack.Windows
             var dlg = new OpenFileDialog
             {
                 Filter = "PDF файлы (*.pdf)|*.pdf",
-                Title = "Выберите инвойс для " + debtor.Name
+                // теперь показываем компанию и контактное лицо
+                Title = $"Выберите инвойс для {debtor.Name} ({debtor.ContactName})"
             };
             if (dlg.ShowDialog() != true) return;
 
@@ -44,9 +46,9 @@ namespace FinTrack.Windows
             File.Copy(dlg.FileName, target, true);
             debtor.InvoiceFilePath = target;
 
-            // обновить InvoiceFileName (свойство, которое вы добавили ранее)
             ImportedGrid.Items.Refresh();
         }
+
 
         // Кнопка «Подтвердить»
         private void Ok_Click(object sender, RoutedEventArgs e)

@@ -15,6 +15,7 @@ using ClosedXML.Excel;
 using System.Windows.Input;
 using System.Windows.Media;
 using FinTrack.Services;
+using System.Windows.Shell;
 
 namespace FinTrack.Pages
 {
@@ -44,7 +45,7 @@ namespace FinTrack.Pages
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            LocalizationManager.LocalizeUI(this);
+            //LocalizationManager.LocalizeUI(this);
         }
 
         private void OpenAddModal_Click(object sender, RoutedEventArgs e)
@@ -64,11 +65,11 @@ namespace FinTrack.Pages
             var debtor = new Debtor
             {
                 Name = CompanyInput.Text,
+                ContactName = ContactNameInput.Text,
                 Email = EmailInput.Text,
                 Phone = PhoneInput.Text,
                 TotalDebt = decimal.TryParse(DebtInput.Text, out var debt) ? debt : 0,
                 DueDate = DueDateInput.SelectedDate ?? DateTime.Today,
-                
             };
 
             Debtors.Add(debtor);
@@ -77,6 +78,7 @@ namespace FinTrack.Pages
             ClearInputs();
             SaveDebtors();
         }
+
 
         private void SortDebtors()
         {
@@ -302,25 +304,28 @@ namespace FinTrack.Pages
                 Title = "Выберите Excel-файл"
             };
 
-            if (dlg.ShowDialog() != true) return;
+            if (dlg.ShowDialog() != true)
+                return;
 
-            ObservableCollection<Debtor> tempList = new();
+            var tempList = new ObservableCollection<Debtor>();
             try
             {
                 using var workbook = new XLWorkbook(dlg.FileName);
                 var sheet = workbook.Worksheets.First();
+                // начинаем со второй строки (первую, заголовки, пропускаем)
                 for (int i = 2; i <= sheet.LastRowUsed().RowNumber(); i++)
                 {
                     var row = sheet.Row(i);
                     var loaded = new Debtor
                     {
                         Name = row.Cell(1).GetValue<string>(),
-                        Email = row.Cell(2).GetValue<string>(),
-                        Phone = row.Cell(3).GetValue<string>(),
-                        TotalDebt = decimal.TryParse(row.Cell(4).GetString(), out var d) ? d : 0,
-                        Paid = decimal.TryParse(row.Cell(5).GetString(), out var p) ? p : 0,
-                        DueDate = DateTime.TryParse(row.Cell(6).GetString(), out var dt) ? dt : DateTime.Today,
-                        InvoiceFilePath = row.Cell(7).GetValue<string>()
+                        ContactName = row.Cell(2).GetValue<string>(),
+                        Email = row.Cell(3).GetValue<string>(),
+                        Phone = row.Cell(4).GetValue<string>(),
+                        TotalDebt = decimal.TryParse(row.Cell(5).GetString(), out var d) ? d : 0,
+                        Paid = decimal.TryParse(row.Cell(6).GetString(), out var p) ? p : 0,
+                        DueDate = DateTime.TryParse(row.Cell(7).GetString(), out var dt) ? dt : DateTime.Today,
+                        InvoiceFilePath = row.Cell(8).GetValue<string>()
                     };
                     tempList.Add(loaded);
                 }
@@ -331,18 +336,15 @@ namespace FinTrack.Pages
                 return;
             }
 
-            // Если есть что обрабатывать — открываем окно с импортом
             if (tempList.Count > 0)
             {
                 var window = new ImportedDebtorsWindow(tempList);
                 if (window.ShowDialog() == true)
                 {
-                    // По «Подтвердить» добавляем всех в основную коллекцию
                     foreach (var d in tempList)
                     {
                         Debtors.Add(d);
                         AuditLogger.Log($"Импортирован должник из Excel: {d.Name}");
-
                     }
                     SaveDebtors();
                     SortDebtors();
@@ -358,14 +360,17 @@ namespace FinTrack.Pages
 
 
 
+
         private void ClearInputs()
         {
             CompanyInput.Text = "";
+            ContactNameInput.Text = "";
             EmailInput.Text = "";
             PhoneInput.Text = "";
             DebtInput.Text = "";
             DueDateInput.SelectedDate = null;
         }
+
         private void ClearInvoice_Click(object sender, RoutedEventArgs e)
         {
             selectedInvoicePath = string.Empty;

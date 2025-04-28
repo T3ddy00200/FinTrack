@@ -9,9 +9,9 @@
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel>
 
-                <!-- 1) Выбор языка -->
+                <!-- Language selection -->
                 <ToggleButton x:Name="LanguageToggleButton"
-                              Content="Выбрать язык"
+                              Content="Select Language"
                               Width="150" Height="30"
                               Margin="0,0,0,10"
                               Background="{DynamicResource AccentBrush}"
@@ -41,31 +41,30 @@
                     </Border>
                 </Popup>
 
-                <TextBlock Text="Настройки"
+                <!-- Header -->
+                <TextBlock Text="Settings"
                            FontSize="24" FontWeight="Bold"
                            Foreground="{DynamicResource TextBrush}"
                            Margin="0,10,0,20"/>
 
-                <!-- 2) Авторассылка -->
-                <Expander Header="Автоуведомления"
+                <!-- Auto-notifications -->
+                <Expander Header="Auto Notifications"
                           IsExpanded="False"
                           Margin="0,0,0,20"
                           Foreground="{DynamicResource TextBrush}">
                     <StackPanel Margin="10">
                         <CheckBox x:Name="AutoSendEnabledCheckBox"
-                                  Content="Включить автоотправку"
+                                  Content="Enable Auto-Send"
                                   Foreground="{DynamicResource TextBrush}"/>
 
-                        <TextBlock Text="Тема уведомления:" Margin="0,10,0,2"
-                                   Foreground="{DynamicResource TextBrush}"/>
+                        <TextBlock Text="Subject:" Margin="0,10,0,2" Foreground="{DynamicResource TextBrush}"/>
                         <TextBox x:Name="AutoNotificationSubjectTextBox"
                                  Height="30"
                                  Background="{DynamicResource PanelBackgroundBrush}"
                                  Foreground="{DynamicResource TextBrush}"
                                  Margin="0,0,0,5"/>
 
-                        <TextBlock Text="Текст уведомления:" Margin="0,5,0,2"
-                                   Foreground="{DynamicResource TextBrush}"/>
+                        <TextBlock Text="Message:" Margin="0,0,0,2" Foreground="{DynamicResource TextBrush}"/>
                         <TextBox x:Name="AutoNotificationBodyTextBox"
                                  Height="100"
                                  AcceptsReturn="True"
@@ -75,38 +74,32 @@
                                  Margin="0,0,0,5"/>
 
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <Button Content="Имя {Name}"
+                            <Button Content="Insert {Name}"
                                     Click="InsertNameTag_Auto_Click"
                                     Width="100"
                                     Background="{DynamicResource HoverBrush}"
                                     Foreground="{DynamicResource TextBrush}"
                                     Margin="0,0,10,0"/>
-                            <Button Content="Долг {Debt}"
+                            <Button Content="Insert {Debt}"
                                     Click="InsertDebtTag_Auto_Click"
                                     Width="100"
                                     Background="{DynamicResource HoverBrush}"
                                     Foreground="{DynamicResource TextBrush}"/>
                         </StackPanel>
 
-                        <TextBlock Text="Дата отправки:" Margin="0,0,0,2"
-                                   Foreground="{DynamicResource TextBrush}"/>
-                        <DatePicker x:Name="AutoNotificationDatePicker"
-                                    Margin="0,0,0,5"/>
+                        <TextBlock Text="Send Date:" Margin="0,0,0,2" Foreground="{DynamicResource TextBrush}"/>
+                        <DatePicker x:Name="AutoNotificationDatePicker" Margin="0,0,0,5"/>
 
-                        <TextBlock Text="Время отправки:" Margin="0,5,0,2" Foreground="{DynamicResource TextBrush}"/>
+                        <TextBlock Text="Send Time:" Margin="0,5,0,2" Foreground="{DynamicResource TextBrush}"/>
                         <xctk:TimePicker x:Name="AutoNotificationTimePicker"
-                 Format="ShortTime"
-                 ShowButtonSpinner="True"
-                 Background="{DynamicResource PanelBackgroundBrush}"
-                 Foreground="{DynamicResource TextBrush}"
-                 Width="100"
-                 Margin="0,0,0,10"/>
+                                         Format="ShortTime"
+                                         ShowButtonSpinner="True"
+                                         Background="{DynamicResource PanelBackgroundBrush}"
+                                         Foreground="{DynamicResource TextBrush}"
+                                         Width="100"
+                                         Margin="0,0,0,10"/>
 
-
-
-
-
-                        <Button Content="Сохранить настройки"
+                        <Button Content="Save Auto Settings"
                                 Click="SaveAutoNotificationText_Click"
                                 Width="240"
                                 Height="35"
@@ -116,23 +109,20 @@
                     </StackPanel>
                 </Expander>
 
-                <!-- 3) Настройки Email -->
-                <TextBlock Text="Email отправителя:" Margin="0,0,0,2"
-                           Foreground="{DynamicResource TextBrush}"/>
+                <!-- Email settings -->
+                <TextBlock Text="Sender Email:" Margin="0,0,0,2" Foreground="{DynamicResource TextBrush}"/>
                 <TextBox x:Name="SenderEmailBox"
                          Height="30" Margin="0,0,0,5"/>
 
-                <TextBlock Text="Пароль для отправки:" Margin="0,0,0,2"
-                           Foreground="{DynamicResource TextBrush}"/>
+                <TextBlock Text="Send Password:" Margin="0,0,0,2" Foreground="{DynamicResource TextBrush}"/>
                 <PasswordBox x:Name="SenderPasswordBox"
                              Height="30" Margin="0,0,0,5"/>
 
-                <TextBlock Text="Пароль для чтения:" Margin="0,0,0,2"
-                           Foreground="{DynamicResource TextBrush}"/>
+                <TextBlock Text="Read Password:" Margin="0,0,0,2" Foreground="{DynamicResource TextBrush}"/>
                 <PasswordBox x:Name="ReadPasswordBox"
                              Height="30" Margin="0,0,0,10"/>
 
-                <Button Content="Сохранить Email"
+                <Button Content="Save Email Settings"
                         Click="SaveEmailButton_Click"
                         Width="180" Height="40"
                         Background="{DynamicResource AccentBrush}"

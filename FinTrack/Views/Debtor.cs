@@ -7,6 +7,7 @@ namespace FinTrack.Views
     public class Debtor
     {
         public string Name { get; set; }
+        public string ContactName { get; set; }
         public string Email { get; set; }
         public string Phone { get; set; }
         public decimal TotalDebt { get; set; }

@@ -8,5 +8,14 @@
     <Setting Name="StartPage" Type="System.String" Scope="User">
       <Value Profile="(Default)">Menu_Home</Value>
     </Setting>
+    <Setting Name="OpenAiEndpoint" Type="System.String" Scope="User">
+      <Value Profile="(Default)">https://&lt;your-resource-name&gt;.openai.azure.com/</Value>
+    </Setting>
+    <Setting Name="OpenAiDeploymentName" Type="System.String" Scope="User">
+      <Value Profile="(Default)">chatgpt-deployment</Value>
+    </Setting>
+    <Setting Name="OpenAiApiKey" Type="System.String" Scope="User">
+      <Value Profile="(Default)">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</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

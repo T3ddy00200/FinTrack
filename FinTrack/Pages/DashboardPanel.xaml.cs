@@ -146,9 +146,9 @@ namespace FinTrack.Controls
 
             PaymentStatusSeries = new SeriesCollection
     {
-        new PieSeries { Title="Оплачено",    Values=new ChartValues<int>{PaidCount},    DataLabels=true },
-        new PieSeries { Title="Не оплачено", Values=new ChartValues<int>{UnpaidCount},  DataLabels=true },
-        new PieSeries { Title="Частично",    Values=new ChartValues<int>{PartialCount}, DataLabels=true }
+        new PieSeries { Title="Paid",    Values=new ChartValues<int>{PaidCount},    DataLabels=true },
+        new PieSeries { Title="Unpaid", Values=new ChartValues<int>{UnpaidCount},  DataLabels=true },
+        new PieSeries { Title="Partial",    Values=new ChartValues<int>{PartialCount}, DataLabels=true }
     };
 
             var today = DateTime.Today;
@@ -360,7 +360,7 @@ namespace FinTrack.Controls
         // --------------- Локализация ---------------
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            LocalizationManager.LocalizeUI(this);
+            //LocalizationManager.LocalizeUI(this);
         }
 
         // --------------- INotifyPropertyChanged ---------------

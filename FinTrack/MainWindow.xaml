@@ -41,39 +41,86 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="73"/>
-            <!-- Верхняя панель -->
+            <!-- Top bar -->
             <RowDefinition Height="*"/>
-            <!-- Контент -->
+            <!-- Content -->
         </Grid.RowDefinitions>
 
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="358"/>
-            <!-- Левая панель -->
+            <!-- Left menu -->
             <ColumnDefinition Width="*"/>
-            <!-- Основной контент -->
+            <!-- Main content -->
         </Grid.ColumnDefinitions>
 
-        <!-- Левая панель -->
-        <StackPanel Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" Background="{DynamicResource PanelBackgroundBrush}">
-            <Image Source="{DynamicResource LogoImageSource}" Height="73" Stretch="Uniform" Margin="0,11"/>
-            <Button x:Name="Menu_Home" Style="{StaticResource MenuButtonStyle}" Content="Главная" Click="Menu_Click" Tag="Главная"/>
-            <Button x:Name="Menu_Debtors" Style="{StaticResource MenuButtonStyle}" Content="Должники" Click="Menu_Click" Tag="Должники"/>
-            <Button x:Name="Menu_Invoices" Style="{StaticResource MenuButtonStyle}" Content="Инвойсы" Click="Menu_Click" Tag="Инвойсы"/>
-            <Button x:Name="Menu_Reports" Style="{StaticResource MenuButtonStyle}" Content="Отчёты" Click="Menu_Click" Tag="Отчёты"/>
-            <Button x:Name="Menu_Messages" Style="{StaticResource MenuButtonStyle}" Content="Сообщения" Click="Menu_Click" Tag="Сообщения"/>
-            <Button x:Name="Menu_Security" Style="{StaticResource MenuButtonStyle}" Content="Безопасность" Click="Menu_Click" Tag="Безопасность"/>
-            <Button x:Name="Menu_Settings" Style="{StaticResource MenuButtonStyle}" Content="Настройки" Click="Menu_Click" Tag="Настройки"/>
-            <Button x:Name="Menu_Users" Style="{StaticResource MenuButtonStyle}" Content="Пользователи" Click="Menu_Click" Tag="Пользователи"/>
+        <!-- Left menu -->
+        <StackPanel Grid.Row="0" Grid.RowSpan="2" Grid.Column="0"
+                    Background="{DynamicResource PanelBackgroundBrush}">
+            <Image Source="{DynamicResource LogoImageSource}"
+                   Height="73" Stretch="Uniform" Margin="0,11"/>
+            <Button x:Name="Menu_Home"
+                    Style="{StaticResource MenuButtonStyle}"
+                    Content="Home"
+                    Click="Menu_Click"
+                    Tag="Home"/>
+            <Button x:Name="Menu_Debtors"
+                    Style="{StaticResource MenuButtonStyle}"
+                    Content="Debtors"
+                    Click="Menu_Click"
+                    Tag="Debtors"/>
+            <Button x:Name="Menu_Invoices"
+                    Style="{StaticResource MenuButtonStyle}"
+                    Content="Invoices"
+                    Click="Menu_Click"
+                    Tag="Invoices"/>
+            <Button x:Name="Menu_Reports"
+                    Style="{StaticResource MenuButtonStyle}"
+                    Content="Reports"
+                    Click="Menu_Click"
+                    Tag="Reports"/>
+            <Button x:Name="Menu_Messages"
+                    Style="{StaticResource MenuButtonStyle}"
+                    Content="Messages"
+                    Click="Menu_Click"
+                    Tag="Messages"/>
+            <Button x:Name="Menu_Security"
+                    Style="{StaticResource MenuButtonStyle}"
+                    Content="Security"
+                    Click="Menu_Click"
+                    Tag="Security"/>
+            <Button x:Name="Menu_Settings"
+                    Style="{StaticResource MenuButtonStyle}"
+                    Content="Settings"
+                    Click="Menu_Click"
+                    Tag="Settings"/>
+            <Button x:Name="Menu_Users"
+                    Style="{StaticResource MenuButtonStyle}"
+                    Content="Users"
+                    Click="Menu_Click"
+                    Tag="Users"/>
         </StackPanel>
 
-        <!-- Верхняя панель -->
-        <DockPanel Grid.Row="0" Grid.Column="1" Background="{DynamicResource HeaderBrush}" Margin="0,0,0,1">
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Right" Margin="0,0,20,0">
-                <Button Content="🌙/☀" Width="40" Height="30" Margin="0,15,10,15" Click="ThemeToggleButton_Click"/>
-                <TextBlock Text="Алексей" Foreground="{DynamicResource TextBrush}" VerticalAlignment="Center" FontSize="16" Margin="10,0"/>
+        <!-- Top bar -->
+        <DockPanel Grid.Row="0" Grid.Column="1"
+                   Background="{DynamicResource HeaderBrush}"
+                   Margin="0,0,0,1">
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        DockPanel.Dock="Right"
+                        Margin="0,0,20,0">
+                <Button Content="🌙/☀"
+                        Width="40"
+                        Height="30"
+                        Margin="0,15,10,15"
+                        Click="ThemeToggleButton_Click"/>
+                <TextBlock Text="Алексей"
+                           Foreground="{DynamicResource TextBrush}"
+                           VerticalAlignment="Center"
+                           FontSize="16"
+                           Margin="10,0"/>
             </StackPanel>
             <TextBlock x:Name="SectionTitle"
-                       Text="Главная"
+                       Text="Home"
                        FontSize="35"
                        FontWeight="Bold"
                        Foreground="{DynamicResource TextBrush}"
@@ -81,7 +128,7 @@
                        VerticalAlignment="Center"/>
         </DockPanel>
 
-        <!-- Контент -->
+        <!-- Main content -->
         <Grid Grid.Row="1" Grid.Column="1">
             <ContentControl x:Name="MainContentPanel"
                             HorizontalAlignment="Stretch"

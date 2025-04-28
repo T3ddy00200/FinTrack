@@ -7,13 +7,14 @@
     <Grid Margin="20">
         <StackPanel>
 
-            <TextBlock Text="Экспорт отчётов"
+            <!-- Header -->
+            <TextBlock Text="Export Reports"
                        FontSize="22"
                        FontWeight="Bold"
                        Foreground="{DynamicResource TextBrush}"
                        Margin="0,0,0,20"/>
 
-            <!-- Поисковик с подсказкой -->
+            <!-- Search box with watermark -->
             <Grid Width="300" Margin="0,0,0,10">
                 <TextBox x:Name="SearchBox"
                          FontSize="14"
@@ -23,7 +24,7 @@
                          BorderBrush="{DynamicResource BorderBrush}"
                          TextChanged="SearchBox_TextChanged"/>
 
-                <TextBlock Text="Поиск по компании, email или телефону..."
+                <TextBlock Text="Search by company, email or phone..."
                            Foreground="{DynamicResource SubTextBrush}"
                            FontSize="13"
                            Margin="12,5,0,0"
@@ -42,7 +43,7 @@
                 </TextBlock>
             </Grid>
 
-            <!-- Список компаний -->
+            <!-- Companies list -->
             <ListBox x:Name="CompaniesListBox"
                      Height="150"
                      SelectionMode="Extended"
@@ -52,10 +53,12 @@
                      FontSize="18"
                      Margin="0,10"/>
 
-            <!-- Кнопка выбора всех -->
+            <!-- Select all -->
             <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
-                <TextBlock Text="Выберите компании:" Foreground="{DynamicResource TextBrush}" VerticalAlignment="Center"/>
-                <Button Content="Выбрать все"
+                <TextBlock Text="Select companies:" 
+                           Foreground="{DynamicResource TextBrush}" 
+                           VerticalAlignment="Center"/>
+                <Button Content="Select All"
                         Click="SelectAllCompanies_Click"
                         Background="{DynamicResource AccentBrush}"
                         Foreground="White"
@@ -63,9 +66,9 @@
                         Padding="10,2"/>
             </StackPanel>
 
-            <!-- Кнопки экспорта -->
+            <!-- Export buttons -->
             <StackPanel Orientation="Horizontal" Margin="0,20,0,0">
-                <Button Content="Экспорт в Excel"
+                <Button Content="Export to Excel"
                         Click="ExportToExcel_Click"
                         Margin="0,0,10,0"
                         FontSize="18"
@@ -73,13 +76,14 @@
                         Background="#2563EB"
                         Foreground="White"/>
 
-                <Button Content="Экспорт в PDF"
+                <Button Content="Export to PDF"
                         Click="ExportToPdf_Click"
                         FontSize="18"
                         Padding="10,5"
                         Background="#991B1B"
                         Foreground="White"/>
             </StackPanel>
+
         </StackPanel>
     </Grid>
 </UserControl>

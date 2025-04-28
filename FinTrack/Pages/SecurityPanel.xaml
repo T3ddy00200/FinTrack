@@ -10,13 +10,14 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="Журнал безопасности"
+        <!-- Header -->
+        <TextBlock Text="Security Log"
                    FontSize="24"
                    FontWeight="Bold"
                    Foreground="{DynamicResource TextBrush}"
                    Margin="0,0,0,20"/>
 
-        <!-- Таблица записей -->
+        <!-- Log entries table -->
         <DataGrid x:Name="LogDataGrid"
                   Grid.Row="1"
                   AutoGenerateColumns="False"
@@ -38,10 +39,10 @@
                 </Style>
             </DataGrid.ColumnHeaderStyle>
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Время"
+                <DataGridTextColumn Header="Time"
                                     Binding="{Binding Timestamp, StringFormat=HH:mm:ss}"
                                     Width="120"/>
-                <DataGridTextColumn Header="Действие"
+                <DataGridTextColumn Header="Action"
                                     Binding="{Binding Message}"
                                     Width="*"/>
             </DataGrid.Columns>

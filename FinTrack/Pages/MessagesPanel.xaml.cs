@@ -15,7 +15,6 @@ using MailKit.Search;
 using MailKit.Security;
 using MimeKit;
 using FinTrack.Pages;
-using FinTrack.Views;
 using Microsoft.Office.Interop.Word;
 using MailMessage = System.Net.Mail.MailMessage;
 using MailAddress = System.Net.Mail.MailAddress;
@@ -23,14 +22,24 @@ using Task = System.Threading.Tasks.Task;
 using System.Windows.Input;
 using System.Collections.ObjectModel;
 using System.Threading;
-using FinTrack.Services;
-
-
+using FinTrack.Services;   // <- подключаем наш сервис
+using FinTrack.Properties;
+using System;
+using System.Threading.Tasks;
+using Azure;
+using Azure.AI.OpenAI;
+using FinTrack.Views;
+using OpenAI;
+using OpenAI.Chat;
+using OpenAI.Models;
 
 namespace FinTrack.Controls
 {
+
     public partial class MessagesPanel : UserControl
     {
+        private readonly ChatGptService _chatGpt = new ChatGptService();
+
         private ObservableCollection<EmailMessage> allMessages = new();
         private readonly string debtorFilePath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "FinTrack", "debtors.json");
@@ -56,11 +65,15 @@ namespace FinTrack.Controls
 
 
         private DispatcherTimer refreshTimer;
+        private readonly ChatGptService _chat = new ChatGptService();
 
 
         public MessagesPanel()
         {
             InitializeComponent();
+
+            
+
             Loaded += async (_, _) =>
             {
                 if (_isInitialized) return;
@@ -80,8 +93,35 @@ namespace FinTrack.Controls
                 refreshTimer.Start();
             };
 
+            this.IsVisibleChanged += (s, e) =>
+            {
+                if ((bool)e.NewValue)  // если панель стала видимой
+                {
+                    LoadDebtors();
+                    RecipientsListBox.Items.Refresh();
+                }
+            };
+
         }
 
+
+        private async void SuggestReply_Click(object sender, RoutedEventArgs e)
+        {
+            if (MessagesListBox.SelectedItem is EmailMessage msg)
+            {
+                StatusTextBlock.Text = "🤖 Generating suggestion…";
+                // полное тело письма как prompt
+                var answer = await _chatGpt.GetChatCompletionAsync(msg.FullBody);
+                // отображаем ответ (или текст ошибки)
+                ReplyTextBox.Text = answer;
+                StatusTextBlock.Text = "✅ Suggestion ready";
+            }
+            else
+            {
+                MessageBox.Show("Please select a message first.", "No selection",
+                                MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
 
         public void ApplySenderSettings(string email, string sendPwd, string readPwd)
         {
@@ -211,12 +251,11 @@ namespace FinTrack.Controls
         // Вставляет {Name} в текст ручного уведомления
         private void InsertNameTag_Manual_Click(object sender, RoutedEventArgs e)
         {
-            // если TextBox пустой или курсор стоит в конце, просто добавляем
             MessageTextBox.Text += " {Name}";
-            // ставим курсор после вставленного текста
             MessageTextBox.CaretIndex = MessageTextBox.Text.Length;
             MessageTextBox.Focus();
         }
+
 
         // Вставляет {Debt} в текст ручного уведомления
         private void InsertDebtTag_Manual_Click(object sender, RoutedEventArgs e)
@@ -308,50 +347,84 @@ namespace FinTrack.Controls
                 return;
             }
 
-            var text = MessageTextBox.Text.Trim();
-            var selected = RecipientsListBox.SelectedItems.Cast<Debtor>().ToList();
-            if (string.IsNullOrWhiteSpace(text) || selected.Count == 0)
+            // Тема письма
+            string subject = !string.IsNullOrWhiteSpace(SubjectTextBox.Text)
+                ? SubjectTextBox.Text.Trim()
+                : "Уведомление от FinTrack";
+
+            // Шаблон текста
+            string template = MessageTextBox.Text.Trim();
+            var recipients = RecipientsListBox.SelectedItems.Cast<Debtor>().ToList();
+            if (string.IsNullOrWhiteSpace(template) || recipients.Count == 0)
             {
-                MessageBox.Show("Введите текст и выберите получателей.");
+                MessageBox.Show("Введите тему, текст и выберите получателей.");
                 AuditLogger.Log("SendNotification_Click: отменено — нет текста или нет получателей");
                 return;
             }
 
             try
             {
-                var smtp = new SmtpClient("smtp.gmail.com", 587)
+                using var smtp = new SmtpClient("smtp.gmail.com", 587)
                 {
                     Credentials = new NetworkCredential(senderEmail, sendPassword),
                     EnableSsl = true
                 };
 
-                foreach (var debtor in selected)
+                foreach (var debtor in recipients)
                 {
-                    // Подставляем имя и сумму долга в текст
+                    // Подготовка тела
                     decimal debtAmount = debtor.TotalDebt - debtor.Paid;
-                    string body = text
-                        .Replace("{Name}", debtor.Name)
+                    string body = template
+                        .Replace("{Name}", debtor.ContactName)
                         .Replace("{Debt}", debtAmount.ToString("0.00"));
 
                     var mail = new MailMessage
                     {
                         From = new MailAddress(senderEmail),
-                        Subject = "Уведомление от FinTrack",
+                        Subject = subject,
                         Body = body,
                         IsBodyHtml = false
                     };
                     mail.To.Add(debtor.Email);
 
-                    // Вложения и остальная логика без изменений
-                    if (!string.IsNullOrEmpty(debtor.InvoiceFilePath) && File.Exists(debtor.InvoiceFilePath))
-                        mail.Attachments.Add(new Attachment(debtor.InvoiceFilePath));
+                    // Выбираем вложение: ручное (selectedPdfPath) имеет приоритет,
+                    // иначе встроенное debtor.InvoiceFilePath
+                    string attachPath = null;
+                    if (!string.IsNullOrEmpty(selectedPdfPath) && File.Exists(selectedPdfPath))
+                    {
+                        attachPath = selectedPdfPath;
+                    }
+                    else if (!string.IsNullOrEmpty(debtor.InvoiceFilePath) && File.Exists(debtor.InvoiceFilePath))
+                    {
+                        attachPath = debtor.InvoiceFilePath;
+                    }
+                    else
+                    {
+                        // Нет ни ручного, ни встроенного инвойса
+                        var result = MessageBox.Show(
+                            $"У должника «{debtor.Name}» нет инвойса.\n" +
+                            "Отправить без вложения?",
+                            "Внимание",
+                            MessageBoxButton.YesNo,
+                            MessageBoxImage.Warning);
+
+                        if (result == MessageBoxResult.No)
+                        {
+                            AuditLogger.Log(
+                                $"SendNotification_Click: отменено отправление для {debtor.Name} — нет инвойса");
+                            return; // Прерываем всю рассылку
+                        }
+                    }
+
+                    if (attachPath != null)
+                        mail.Attachments.Add(new Attachment(attachPath));
 
                     smtp.Send(mail);
-
-                    // пауза 3 секунды перед отправкой следующего письма
                     Thread.Sleep(3000);
+                    AuditLogger.Log($"SendNotification_Click: письмо отправлено {debtor.Email} (инвойс: {attachPath ?? "нет"})");
                 }
-                AuditLogger.Log($"SendNotification_Click: уведомления отправлены {selected.Count} должникам");
+
+                AuditLogger.Log($"SendNotification_Click: уведомления успешно отправлены {recipients.Count} получателям");
                 MessageBox.Show("Уведомления отправлены.");
             }
             catch (Exception ex)
@@ -360,6 +433,8 @@ namespace FinTrack.Controls
                 AuditLogger.Log($"SendNotification_Click: ошибка рассылки — {ex.Message}");
             }
         }
+
+
 
         private void AutoSendNotifications()
         {

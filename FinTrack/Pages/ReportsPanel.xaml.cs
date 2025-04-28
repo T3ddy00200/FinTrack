@@ -20,7 +20,7 @@ namespace FinTrack.Pages
     {
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            LocalizationManager.LocalizeUI(this);
+            //LocalizationManager.LocalizeUI(this);
         }
         private List<string> allCompanyNames = new(); // Все компании (для фильтра)
         private void SelectAllCompanies_Click(object sender, RoutedEventArgs e)

@@ -20,7 +20,7 @@ namespace FinTrack.Controls
     {
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            LocalizationManager.LocalizeUI(this);
+            //LocalizationManager.LocalizeUI(this);
         }
         public UsersPanel()
         {
