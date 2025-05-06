@@ -1,0 +1,80 @@
+﻿<Window x:Class="FinTrack.Windows.UnsubscribeButtonEditor"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Настройка кнопки отписки" Height="370" Width="400"
+        WindowStartupLocation="CenterOwner">
+
+    <Window.Resources>
+        <Style x:Key="RoundedButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Red"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="{TemplateBinding Tag}">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              Content="{TemplateBinding Content}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Текст -->
+        <StackPanel Orientation="Vertical" Margin="0,0,0,10">
+            <TextBlock Text="Текст на кнопке:" Margin="0,0,0,4"/>
+            <TextBox x:Name="ButtonTextBox" Text="Отписаться от рассылки" TextChanged="AnyChanged"/>
+        </StackPanel>
+
+        <!-- Цвет фона -->
+        <StackPanel Grid.Row="1" Orientation="Vertical" Margin="0,0,0,10">
+            <TextBlock Text="Цвет фона:" Margin="0,0,0,4"/>
+            <Button x:Name="BgColorBox" Content="Выбрать цвет фона" Click="PickBgColor_Click"/>
+        </StackPanel>
+
+        <!-- Цвет текста -->
+        <StackPanel Grid.Row="2" Orientation="Vertical" Margin="0,0,0,10">
+            <TextBlock Text="Цвет текста:" Margin="0,0,0,4"/>
+            <Button x:Name="TextColorBox" Content="Выбрать цвет текста" Click="PickTextColor_Click"/>
+        </StackPanel>
+
+        <!-- Скругление -->
+        <StackPanel Grid.Row="3" Orientation="Vertical" Margin="0,0,0,10">
+            <TextBlock Text="Скругление (px):" Margin="0,0,0,4"/>
+            <TextBox x:Name="RadiusBox" Text="4" TextChanged="AnyChanged"/>
+        </StackPanel>
+
+        <!-- Превью кнопки -->
+        <StackPanel Grid.Row="4" Margin="10" HorizontalAlignment="Center">
+            <Button x:Name="PreviewButton"
+                    Content="Отписаться от рассылки"
+                    Style="{StaticResource RoundedButtonStyle}"
+                    Tag="4"
+                    MinWidth="200"
+                    HorizontalAlignment="Center"/>
+        </StackPanel>
+
+        <!-- OK / Cancel -->
+        <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="OK" Width="80" Margin="0,0,10,0" Click="Ok_Click"/>
+            <Button Content="Отмена" Width="80" Click="Cancel_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

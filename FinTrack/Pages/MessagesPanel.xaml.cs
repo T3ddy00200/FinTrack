@@ -1,8 +1,5 @@
 ﻿using FinTrack.Models;
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Mail;
 using System.Text.Json;
@@ -14,24 +11,14 @@ using MailKit;
 using MailKit.Search;
 using MailKit.Security;
 using MimeKit;
-using FinTrack.Pages;
-using Microsoft.Office.Interop.Word;
 using MailMessage = System.Net.Mail.MailMessage;
 using MailAddress = System.Net.Mail.MailAddress;
 using Task = System.Threading.Tasks.Task;
 using System.Windows.Input;
 using System.Collections.ObjectModel;
-using System.Threading;
 using FinTrack.Services;   // <- подключаем наш сервис
-using FinTrack.Properties;
-using System;
-using System.Threading.Tasks;
-using Azure;
-using Azure.AI.OpenAI;
 using FinTrack.Views;
-using OpenAI;
-using OpenAI.Chat;
-using OpenAI.Models;
+
 
 namespace FinTrack.Controls
 {
@@ -66,14 +53,9 @@ namespace FinTrack.Controls
 
         private DispatcherTimer refreshTimer;
         private readonly ChatGptService _chat = new ChatGptService();
-
-
         public MessagesPanel()
         {
             InitializeComponent();
-
-            
-
             Loaded += async (_, _) =>
             {
                 if (_isInitialized) return;
@@ -92,7 +74,6 @@ namespace FinTrack.Controls
                 };
                 refreshTimer.Start();
             };
-
             this.IsVisibleChanged += (s, e) =>
             {
                 if ((bool)e.NewValue)  // если панель стала видимой
@@ -101,19 +82,21 @@ namespace FinTrack.Controls
                     RecipientsListBox.Items.Refresh();
                 }
             };
-
         }
-
-
         private async void SuggestReply_Click(object sender, RoutedEventArgs e)
         {
             if (MessagesListBox.SelectedItem is EmailMessage msg)
             {
                 StatusTextBlock.Text = "🤖 Generating suggestion…";
-                // полное тело письма как prompt
-                var answer = await _chatGpt.GetChatCompletionAsync(msg.FullBody);
-                // отображаем ответ (или текст ошибки)
-                ReplyTextBox.Text = answer;
+
+                // Получаем текущий язык UI ("ru", "en" и т.п.)
+                var lang = Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName;
+
+                // Генерируем уведомление по просроченным должникам на этом языке
+                var notificationText = await _chatGpt.GenerateOverdueNotificationAsync(lang);
+
+                // Отображаем его в поле ответа
+                ReplyTextBox.Text = notificationText;
                 StatusTextBlock.Text = "✅ Suggestion ready";
             }
             else
@@ -129,8 +112,7 @@ namespace FinTrack.Controls
             sendPassword = sendPwd;
             readPassword = readPwd;
         }
-
-        private async Task LoadMessagesAsync()
+       private async Task LoadMessagesAsync()
         {
             AuditLogger.Log("LoadMessagesAsync: старт загрузки писем");
             ShowLoading(true);
@@ -142,7 +124,6 @@ namespace FinTrack.Controls
                     AuditLogger.Log("LoadMessagesAsync: пропущено — нет данных для чтения почты");
                     return;
                 }
-
                 using var client = new ImapClient();
                 await client.ConnectAsync("imap.gmail.com", 993, SecureSocketOptions.SslOnConnect);
                 await client.AuthenticateAsync(senderEmail, readPassword);
@@ -152,16 +133,13 @@ namespace FinTrack.Controls
 
                 var sinceDate = DateTime.UtcNow.AddDays(-7);
                 var uids = await inbox.SearchAsync(SearchQuery.DeliveredAfter(sinceDate));
-
                 // Загружаем все summary с флагами
                 var allSummaries = await inbox.FetchAsync(uids,
                     MessageSummaryItems.Envelope | MessageSummaryItems.UniqueId | MessageSummaryItems.Flags);
-
                 // Фильтруем только НЕпрочитанные
                 var unreadSummaries = allSummaries
                     .Where(s => !s.Flags.HasValue || !s.Flags.Value.HasFlag(MessageFlags.Seen))
                     .ToList();
-
                 // Очищаем список перед загрузкой
                 System.Windows.Application.Current.Dispatcher.Invoke(() => allMessages.Clear());
 
@@ -183,11 +161,9 @@ namespace FinTrack.Controls
                             Preview = text.Length > 100 ? text[..100] : text,
                             Uid = summary.UniqueId
                         };
-
                         System.Windows.Application.Current.Dispatcher.Invoke(() => allMessages.Add(message));
                     }
                 }
-
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
                     MessagesListBox.ItemsSource = null;
@@ -208,8 +184,6 @@ namespace FinTrack.Controls
                 AuditLogger.Log("LoadMessagesAsync: завершение загрузки писем");
             }
         }
-
-
         private void MessagesListBox_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
             e.Handled = true;
@@ -222,8 +196,6 @@ namespace FinTrack.Controls
             var parent = ((Control)sender).Parent as UIElement;
             parent?.RaiseEvent(eventArg);
         }
-
-
         private void ChoosePdf_Click(object sender, RoutedEventArgs e)
         {
             var dlg = new Microsoft.Win32.OpenFileDialog { Filter = "PDF файлы (*.pdf)|*.pdf" };
@@ -247,7 +219,6 @@ namespace FinTrack.Controls
                 ReplyPdfFileNameTextBlock.Text = fileName;
             }
         }
-
         // Вставляет {Name} в текст ручного уведомления
         private void InsertNameTag_Manual_Click(object sender, RoutedEventArgs e)
         {
@@ -255,8 +226,6 @@ namespace FinTrack.Controls
             MessageTextBox.CaretIndex = MessageTextBox.Text.Length;
             MessageTextBox.Focus();
         }
-
-
         // Вставляет {Debt} в текст ручного уведомления
         private void InsertDebtTag_Manual_Click(object sender, RoutedEventArgs e)
         {
@@ -264,8 +233,6 @@ namespace FinTrack.Controls
             MessageTextBox.CaretIndex = MessageTextBox.Text.Length;
             MessageTextBox.Focus();
         }
-
-
         private async void ReplyButton_Click(object sender, RoutedEventArgs e)
         {
             if (MessagesListBox.SelectedItem is not EmailMessage selected || string.IsNullOrWhiteSpace(ReplyTextBox.Text))
@@ -273,7 +240,6 @@ namespace FinTrack.Controls
                 MessageBox.Show("Выберите письмо и введите текст ответа.");
                 return;
             }
-
             AuditLogger.Log($"ReplyButton_Click: попытка ответа на письмо от {selected.From} (UID={selected.Uid})");
             SendingOverlay.Visibility = Visibility.Visible;
             try
@@ -333,9 +299,6 @@ namespace FinTrack.Controls
                 SendingOverlay.Visibility = Visibility.Collapsed;
             }
         }
-
-
-
         private void SendNotification_Click(object sender, RoutedEventArgs e)
         {
             AuditLogger.Log("SendNotification_Click: ручная рассылка уведомлений — начало");
@@ -433,9 +396,6 @@ namespace FinTrack.Controls
                 AuditLogger.Log($"SendNotification_Click: ошибка рассылки — {ex.Message}");
             }
         }
-
-
-
         private void AutoSendNotifications()
         {
             AuditLogger.Log("AutoSendNotifications: проверка автосенд-дня");
@@ -451,8 +411,7 @@ namespace FinTrack.Controls
             }
 
             try
-            {
-                
+            {       
                 var smtp = new SmtpClient("smtp.gmail.com", 587)
                 {
                     Credentials = new NetworkCredential(senderEmail, sendPassword),
@@ -495,14 +454,12 @@ namespace FinTrack.Controls
                 AuditLogger.Log($"AutoSendNotifications: ошибка — {ex.Message}");
             }
         }
-
         private bool WasAlreadySentThisMonth()
         {
             if (!File.Exists(autoSendLogPath)) return false;
             var log = JsonSerializer.Deserialize<AutoSendLog>(File.ReadAllText(autoSendLogPath));
             return log?.Year == DateTime.Today.Year && log?.Month == DateTime.Today.Month;
         }
-
         private bool IsAutoSendDay()
         {
             var today = DateTime.Today;
@@ -511,7 +468,6 @@ namespace FinTrack.Controls
             if (scheduled.DayOfWeek == DayOfWeek.Sunday) scheduled = scheduled.AddDays(1);
             return today == scheduled;
         }
-
         private void LoadDebtors()
         {
             if (File.Exists(debtorFilePath))
@@ -530,7 +486,6 @@ namespace FinTrack.Controls
                 }
             }
         }
-
         public async Task LoadMessagesIfConfiguredAsync()
         {
             if (!string.IsNullOrWhiteSpace(senderEmail) && !string.IsNullOrWhiteSpace(readPassword))
@@ -542,7 +497,6 @@ namespace FinTrack.Controls
                 StatusTextBlock.Text = "📭 Для загрузки писем укажите почту и пароли в настройках.";
             }
         }
-
         private void LoadSenderData()
         {
             if (!File.Exists(senderFilePath)) return;
@@ -563,7 +517,6 @@ namespace FinTrack.Controls
                 StatusTextBlock.Text = "⚠️ Ошибка чтения sender.json: " + ex.Message;
             }
         }
-
         private void RecipientsListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             if (RecipientsListBox.SelectedItem is Debtor debtor && !debtor.HasInvoice)
@@ -585,15 +538,12 @@ namespace FinTrack.Controls
                 }
             }
         }
-
-
         private void ShowLoading(bool show)
         {
             LoadingOverlay.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
             this.IsEnabled = !show;
         }
     }
-
     public class AutoSendLog
     {
         public int Year { get; set; }

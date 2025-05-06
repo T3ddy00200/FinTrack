@@ -83,6 +83,13 @@
                     Content="Messages"
                     Click="Menu_Click"
                     Tag="Messages"/>
+            <!-- в StackPanel меню -->
+            <Button x:Name="Menu_Marketing"
+        Style="{StaticResource MenuButtonStyle}"
+        Content="Marketing"
+        Click="Menu_Click"
+        Tag="Marketing"/>
+
             <Button x:Name="Menu_Security"
                     Style="{StaticResource MenuButtonStyle}"
                     Content="Security"

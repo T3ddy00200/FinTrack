@@ -8,11 +8,15 @@ using System.Text.Json;
 using FinTrack.Models;
 using FinTrack.Pages;
 using FinTrack.Views;
+using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace FinTrack.Services
 {
     public static class AutoNotifier
     {
+        
+
         private static readonly string senderPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "FinTrack", "sender.json");
@@ -29,14 +33,14 @@ namespace FinTrack.Services
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "FinTrack", "autosend_log.json");
 
-        public static void TryAutoSend()
+       
+        public static async Task TryAutoSend()
         {
             try
             {
                 if (!File.Exists(senderPath) || !File.Exists(debtorsPath) || !File.Exists(configPath))
                     return;
 
-                // Десериализуем настройки отправителя и авторассылки
                 var senderConfig = JsonSerializer.Deserialize<EmailSenderConfig>(File.ReadAllText(senderPath));
                 var autoCfg = JsonSerializer.Deserialize<AutoSendSettings>(File.ReadAllText(configPath));
 
@@ -51,8 +55,9 @@ namespace FinTrack.Services
                     return;
                 }
 
-                // Загружаем должников
-                var debtors = JsonSerializer.Deserialize<List<Debtor>>(File.ReadAllText(debtorsPath)) ?? new();
+                var debtors = JsonSerializer
+                    .Deserialize<List<Debtor>>(File.ReadAllText(debtorsPath))
+                    ?? new List<Debtor>();
 
                 using var smtp = new SmtpClient("smtp.gmail.com", 587)
                 {
@@ -61,11 +66,12 @@ namespace FinTrack.Services
                 };
 
                 foreach (var debtor in debtors
-                                  .Where(d => d.PaymentStatus != "Оплачено" && d.DueDate < DateTime.Today))
+                    .Where(d => d.PaymentStatus != "Оплачено" && d.DueDate < DateTime.Today))
                 {
+                    // Считаем остаток долга
                     var debtStr = (debtor.TotalDebt - debtor.Paid).ToString("0.00");
 
-                    // Подставляем плейсхолдеры в тему и тело
+                    // Подставляем переменные в шаблоны
                     var subject = autoCfg.SubjectTemplate
                         .Replace("{Name}", debtor.Name)
                         .Replace("{Debt}", debtStr);
@@ -79,24 +85,25 @@ namespace FinTrack.Services
                         From = new MailAddress(senderConfig.Email),
                         Subject = subject,
                         Body = body,
-                        IsBodyHtml = false
+                        IsBodyHtml = true  // если шаблон содержит HTML
                     };
                     mail.To.Add(debtor.Email);
 
-                    // Прикладываем инвойс, если он есть
                     if (!string.IsNullOrEmpty(debtor.InvoiceFilePath) && File.Exists(debtor.InvoiceFilePath))
                         mail.Attachments.Add(new Attachment(debtor.InvoiceFilePath));
 
                     smtp.Send(mail);
 
-                    // Задержка между письмами
-                    System.Threading.Thread.Sleep(3000);
+                    // пауза между отправками
+                    await Task.Delay(3000);
                 }
 
-                // Фиксируем дату отправки
+                // Записываем факт отправки
                 File.WriteAllText(logPath,
-                    JsonSerializer.Serialize(new AutoSendLog { DateSent = DateTime.Today },
-                                             new JsonSerializerOptions { WriteIndented = true }));
+                    JsonSerializer.Serialize(
+                        new AutoSendLog { DateSent = DateTime.Today },
+                        new JsonSerializerOptions { WriteIndented = true }
+                    ));
             }
             catch (Exception ex)
             {
@@ -124,6 +131,7 @@ namespace FinTrack.Services
             }
             return false;
         }
+
     }
 
     public class AutoSendLog

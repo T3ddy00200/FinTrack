@@ -28,6 +28,21 @@ namespace FinTrack.Pages
             LoadSettings();
         }
 
+        private async void TestAutoSendButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                await AutoNotifier.TryAutoSend();
+                Xceed.Wpf.Toolkit.MessageBox.Show("Проверка авторассылки завершена.", "Готово",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                Xceed.Wpf.Toolkit.MessageBox.Show("Ошибка при запуске авторассылки: " + ex.Message, "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
             //LocalizationManager.LocalizeUI(this);
@@ -199,9 +214,10 @@ namespace FinTrack.Pages
     public class AutoSendSettings
     {
         public bool Enabled { get; set; }
-        public string Time { get; set; } = "09:00";
-        public int ScheduledDay { get; set; } = 1;
-        public string SubjectTemplate { get; set; } = "Просроченная задолженность";
-        public string BodyTemplate { get; set; } = "Здравствуйте, {Name}! У вас задолженность {Debt} ₽.";
+        public int ScheduledDay { get; set; }
+        public string Time { get; set; }
+        public string SubjectTemplate { get; set; }
+        public string BodyTemplate { get; set; }
     }
+
 }

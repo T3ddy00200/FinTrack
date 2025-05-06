@@ -3,6 +3,7 @@ using System;
 using System.Windows;
 using System.Windows.Threading;
 using FinTrack.Services;    // для AutoNotifier
+using Microsoft.Win32;
 
 namespace FinTrack
 {
@@ -13,6 +14,8 @@ namespace FinTrack
 
         protected override void OnStartup(StartupEventArgs e)
         {
+        
+
             base.OnStartup(e);
 
             // 1) Инициализируем трей-иконку из XAML-ресурса
@@ -20,7 +23,10 @@ namespace FinTrack
 
             // 2) Таймер автоотправки
             autoSendTimer = new DispatcherTimer { Interval = TimeSpan.FromMinutes(1) };
-            autoSendTimer.Tick += (_, _) => AutoNotifier.TryAutoSend();
+            autoSendTimer.Tick += async (_, _) =>
+            {
+                await AutoNotifier.TryAutoSend();
+            };
             autoSendTimer.Start();
 
             // 3) Показ главного окна
@@ -31,8 +37,19 @@ namespace FinTrack
                 MainWindow.Hide();
             };
             MainWindow.Show();
+            SetBrowserFeatureControl();
         }
 
+        private void SetBrowserFeatureControl()
+        {
+            try
+            {
+                string appName = System.IO.Path.GetFileName(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
+                Registry.SetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_BROWSER_EMULATION",
+                                  appName, 11001, RegistryValueKind.DWord);
+            }
+            catch { /* игнор ошибок */ }
+        }
         private void InitTrayIcon()
         {
             // просто берём TaskbarIcon, описанный в App.xaml

@@ -1,0 +1,188 @@
+﻿<Window x:Class="FinTrack.Windows.MarketingWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        Title="Marketing Editor"
+        Height="700" Width="900"
+        
+        Background="{DynamicResource BackgroundBrush}">
+
+    <!-- 1. Ресурсы окна -->
+    <Window.Resources>
+        <!-- стиль для элементов ComboBox на тёмном фоне -->
+        <Style x:Key="ComboBoxItemDarkStyle" TargetType="ComboBoxItem">
+            <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+            <Style.Triggers>
+                <Trigger Property="IsHighlighted" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <DockPanel>
+
+        <!-- Toolbar -->
+        <ToolBar DockPanel.Dock="Top"
+                 Background="{DynamicResource PanelBackgroundBrush}">
+
+            <!-- Font family & size -->
+            <ComboBox x:Name="FontFamilyBox"
+                      Width="150" Margin="2"
+                      Background="{DynamicResource PanelBackgroundBrush}"
+                      Foreground="{DynamicResource TextBrush}"
+                      ItemContainerStyle="{StaticResource ComboBoxItemDarkStyle}"
+                      SelectionChanged="FontFamilyBox_SelectionChanged"/>
+            <ComboBox x:Name="FontSizeBox"
+                      Width="60" Margin="2"
+                      Background="{DynamicResource PanelBackgroundBrush}"
+                      Foreground="{DynamicResource TextBrush}"
+                      ItemContainerStyle="{StaticResource ComboBoxItemDarkStyle}"
+                      IsEditable="True"
+                      Text="14"
+                      SelectionChanged="FontSizeBox_SelectionChanged">
+                <sys:String>8</sys:String>
+                <sys:String>10</sys:String>
+                <sys:String>12</sys:String>
+                <sys:String>14</sys:String>
+                <sys:String>16</sys:String>
+                <sys:String>18</sys:String>
+                <sys:String>24</sys:String>
+                <sys:String>32</sys:String>
+            </ComboBox>
+
+            <Separator/>
+
+            <!-- Styles -->
+            <ToggleButton Click="Bold_Click"
+                          ToolTip="Bold"
+                          Content="B"
+                          FontWeight="Bold"
+                          Width="30"
+                          Foreground="{DynamicResource TextBrush}"/>
+            <ToggleButton Click="Italic_Click"
+                          ToolTip="Italic"
+                          Content="I"
+                          FontStyle="Italic"
+                          Width="30"
+                          Foreground="{DynamicResource TextBrush}"/>
+            <ToggleButton Click="Underline_Click"
+                          ToolTip="Underline"
+                          Width="30"
+                          Foreground="{DynamicResource TextBrush}">
+                <TextBlock Text="U"
+                           TextDecorations="Underline"
+                           FontWeight="Bold"
+                           HorizontalAlignment="Center"
+                           Foreground="{DynamicResource TextBrush}"/>
+            </ToggleButton>
+            <Button Click="Center_Click"
+                    ToolTip="Center"
+                    Content="⇆"
+                    Width="30"
+                    Foreground="{DynamicResource TextBrush}"/>
+            <Button Click="Left_Click"
+                    ToolTip="Left"
+                    Content="⇦"
+                    Width="30"
+                    Foreground="{DynamicResource TextBrush}"/>
+
+            <Separator/>
+
+            <!-- Color -->
+            <Button Click="PickTextColor_Click"
+                    ToolTip="Text Color"
+                    Content="A"
+                    Width="30"
+                    Foreground="{DynamicResource TextBrush}"/>
+            <Button Click="PickHighlightColor_Click"
+                    ToolTip="Highlight"
+                    Content="H"
+                    Width="30"
+                    Foreground="{DynamicResource TextBrush}"/>
+
+            <Separator/>
+
+            <!-- Image insert -->
+            <Button Click="InsertImage_Click"
+                    ToolTip="Insert Image"
+                    Content="🖼"
+                    Width="30"
+                    Foreground="{DynamicResource TextBrush}"/>
+
+            <Button Click="InsertUnsubscribeButton_Click"
+        ToolTip="Добавить кнопку отписки"
+        Content="Button"
+        Width="30"
+        Foreground="{DynamicResource TextBrush}"/>
+
+            <Separator/>
+
+            <!-- Editor background -->
+            <Button Click="PickEditorBgColor_Click"
+                    ToolTip="Editor Background Color"
+                    Content="BgC"
+                    Width="40"
+                    Foreground="{DynamicResource TextBrush}"/>
+            <!--<Button Click="PickEditorBgImage_Click"
+                    ToolTip="Editor Background Image"
+                    Content="BgI"
+                    Width="40"
+                    Foreground="{DynamicResource TextBrush}"/>-->
+            <Button Click="ClearEditorBg_Click"
+                    ToolTip="Clear Background"
+                    Content="Clr"
+                    Width="40"
+                    Foreground="{DynamicResource TextBrush}"/>
+
+            <Separator/>
+
+            <!-- Save / Cancel / Preview -->
+            <Button Click="Save_Click"
+                    ToolTip="Save"
+                    Content="💾"
+                    Width="30"
+                    Foreground="{DynamicResource TextBrush}"/>
+            <Button Click="Cancel_Click"
+                    ToolTip="Cancel"
+                    Content="↺"
+                    Width="30"
+                    Foreground="{DynamicResource TextBrush}"/>
+            <Button Click="Preview_Click"
+                    ToolTip="Preview"
+                    Content="🔍"
+                    Width="30"
+                    Foreground="{DynamicResource TextBrush}"/>
+
+        </ToolBar>
+
+        <!-- Tabs: Edit / Preview -->
+        <TabControl x:Name="MainTab" DockPanel.Dock="Bottom">
+            <TabItem Header="Edit">
+                <WebBrowser x:Name="EditorBrowser" Margin="5"/>
+            </TabItem>
+            <TabItem Header="Preview">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <WebBrowser x:Name="PreviewBrowser" Grid.Row="0"/>
+                    <StackPanel Grid.Row="1"
+                                Orientation="Horizontal"
+                                HorizontalAlignment="Center"
+                                Margin="0,5">
+                        <Button Content="Desktop View"
+                                Click="DesktopView_Click"
+                                Margin="5"/>
+                        <Button Content="Mobile View"
+                                Click="MobileView_Click"
+                                Margin="5"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+        </TabControl>
+
+    </DockPanel>
+</Window>

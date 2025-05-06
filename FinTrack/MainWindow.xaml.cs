@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using FinTrack.Controls;
 using FinTrack.Pages;
+using FinTrack.Services;
 
 namespace FinTrack
 {
@@ -11,6 +12,7 @@ namespace FinTrack
     {
         private readonly MessagesPanel _messagesPanel = new MessagesPanel();
         private bool isDarkTheme = true;
+        private System.Windows.Threading.DispatcherTimer autoSendTimer;
 
         public MainWindow()
         {
@@ -18,17 +20,16 @@ namespace FinTrack
             StateChanged += MainWindow_StateChanged;
             Closing += MainWindow_Closing;
 
-            // Load start page key (now stored as English: "Home", "Debtors", etc.)
             string startPage = Properties.Settings.Default.StartPage;
 
-            // Show the section title and initial panel
             SectionTitle.Text = startPage;
             MainContentPanel.Content = CreatePanelByKey(startPage);
 
-            // If start page is Messages, immediately load emails
             if (startPage == "Messages")
                 _ = _messagesPanel.LoadMessagesIfConfiguredAsync();
+
         }
+
 
         protected override void OnStateChanged(EventArgs e)
         {
@@ -103,7 +104,9 @@ namespace FinTrack
             "Security" => new SecurityPanel(),
             "Settings" => new SettingsPanel(),
             "Users" => new UsersPanel(),
+            "Marketing" => new MarketingPanel(),    // ← вот она!
             _ => new DashboardPanel()
         };
+
     }
 }
