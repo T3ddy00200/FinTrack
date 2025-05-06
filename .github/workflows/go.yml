@@ -1,0 +1,36 @@
+name: 🚀 Deploy FinTrack via SSH
+
+on:
+  push:
+    branches:
+      - master  # Триггер при пуше в ветку master
+
+env:
+  SERVER_USERNAME: root
+  SERVER_IP: 168.119.255.188
+  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🔽 Checkout repository
+        uses: actions/checkout@v2
+
+      - name: 🔐 SSH into server and deploy latest code
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.SERVER_IP }}
+          username: ${{ env.SERVER_USERNAME }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            echo "📁 Переход в директорию проекта"
+            cd /root/src/fintrack/FinTrack
+
+            echo "🔄 Обновление кода из GitHub (ветка master)"
+            git fetch origin
+            git reset --hard origin/master
+
+            echo "✅ Код успешно обновлён!"
+          timeout: 120s
