@@ -6,7 +6,7 @@
       <Value Profile="(Default)">ru</Value>
     </Setting>
     <Setting Name="StartPage" Type="System.String" Scope="User">
-      <Value Profile="(Default)">Menu_Home</Value>
+      <Value Profile="(Default)">Home</Value>
     </Setting>
     <Setting Name="OpenAiEndpoint" Type="System.String" Scope="User">
       <Value Profile="(Default)">https://api.openai.com/
@@ -17,6 +17,9 @@
     </Setting>
     <Setting Name="OpenAiApiKey" Type="System.String" Scope="User">
       <Value Profile="(Default)">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</Value>
+    </Setting>
+    <Setting Name="Theme" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Dark</Value>
     </Setting>
   </Settings>
 </SettingsFile>

@@ -1,17 +1,14 @@
-﻿using FinTrack;
-using Hardcodet.Wpf.TaskbarNotification;
-using Microsoft.Win32;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System;
+using System.Linq;
 using System.Windows;
+using Hardcodet.Wpf.TaskbarNotification;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Threading;
+using Microsoft.Win32;
 
-namespace decoder
+// Убедись, что пространство имен здесь FinTrack
+namespace FinTrack
 {
     public partial class App : Application
     {
@@ -31,16 +28,13 @@ namespace decoder
             }
 
             base.OnStartup(e);
-
             InitTrayIcon();
 
             autoSendTimer = new DispatcherTimer { Interval = TimeSpan.FromMinutes(1) };
-            autoSendTimer.Tick += async (_, _) =>
-            {
-                await FinTrack.Services.AutoNotifier.TryAutoSend();
-            };
+            autoSendTimer.Tick += async (_, _) => { await Services.AutoNotifier.TryAutoSend(); };
             autoSendTimer.Start();
 
+            // Теперь MainWindow создается из правильного контекста
             MainWindow = new MainWindow();
             MainWindow.Closing += (s, args) =>
             {
@@ -48,27 +42,6 @@ namespace decoder
                 MainWindow.Hide();
             };
             MainWindow.Show();
-
-            SetBrowserFeatureControl();
-        }
-
-        private void SetBrowserFeatureControl()
-        {
-            try
-            {
-                string appName = System.IO.Path.GetFileName(
-                    System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
-                Registry.SetValue(
-                    @"HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_BROWSER_EMULATION",
-                    appName,
-                    11001,
-                    RegistryValueKind.DWord
-                );
-            }
-            catch
-            {
-                // игнорируем ошибки
-            }
         }
 
         private void InitTrayIcon()
@@ -78,9 +51,7 @@ namespace decoder
 
         public void Tray_Open_Click(object sender, RoutedEventArgs e)
         {
-            if (MainWindow == null)
-                MainWindow = new MainWindow();
-
+            if (MainWindow == null) MainWindow = new MainWindow();
             MainWindow.Show();
             MainWindow.WindowState = WindowState.Normal;
             MainWindow.Activate();
@@ -94,7 +65,7 @@ namespace decoder
 
         protected override void OnExit(ExitEventArgs e)
         {
-            try { _mutex?.ReleaseMutex(); } catch { }
+            _mutex?.ReleaseMutex();
             _trayIcon?.Dispose();
             base.OnExit(e);
         }

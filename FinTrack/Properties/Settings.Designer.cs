@@ -37,7 +37,7 @@ namespace FinTrack.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("Menu_Home")]
+        [global::System.Configuration.DefaultSettingValueAttribute("Home")]
         public string StartPage {
             get {
                 return ((string)(this["StartPage"]));
@@ -49,7 +49,7 @@ namespace FinTrack.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("https://api.openai.com/\n")]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://api.openai.com/\r\n")]
         public string OpenAiEndpoint {
             get {
                 return ((string)(this["OpenAiEndpoint"]));
@@ -82,6 +82,18 @@ namespace FinTrack.Properties {
             }
             set {
                 this["OpenAiApiKey"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Dark")]
+        public string Theme {
+            get {
+                return ((string)(this["Theme"]));
+            }
+            set {
+                this["Theme"] = value;
             }
         }
     }
