@@ -17,37 +17,50 @@ namespace FinTrack
             InitializeComponent();
             StateChanged += MainWindow_StateChanged;
             Closing += MainWindow_Closing;
+        }
 
+        private void UserControl_Loaded(object sender, RoutedEventArgs e)
+        {
             string startPage = Properties.Settings.Default.StartPage;
+            if (string.IsNullOrEmpty(startPage))
+            {
+                startPage = "Home";
+            }
 
-            SectionTitle.Text = startPage;
-            MainContentPanel.Content = CreatePanelByKey(startPage);
+            UpdateContentByTag(startPage);
 
-            if (startPage == "Messages")
+            var initialItem = MenuListBox.Items.OfType<ListBoxItem>().FirstOrDefault(item => (string)item.Tag == startPage);
+            if (initialItem != null)
+            {
+                MenuListBox.SelectedItem = initialItem;
+            }
+        }
+
+        private void Menu_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (e.AddedItems.Count > 0 && e.AddedItems[0] is ListBoxItem selectedItem)
+            {
+                if (selectedItem.Tag is string tag)
+                {
+                    UpdateContentByTag(tag);
+                }
+            }
+        }
+
+        private void UpdateContentByTag(string tag)
+        {
+            if (SectionTitle == null)
+            {
+                MessageBox.Show("SectionTitle не инициализирован!");
+                return;
+            }
+            SectionTitle.Text = tag;
+            MainContentPanel.Content = CreatePanelByKey(tag);
+
+            if (tag == "Messages")
+            {
                 _ = _messagesPanel.LoadMessagesIfConfiguredAsync();
-        }
-
-        protected override void OnStateChanged(EventArgs e)
-        {
-            if (WindowState == WindowState.Minimized)
-            {
-                Hide();
             }
-            base.OnStateChanged(e);
-        }
-
-        private void MainWindow_StateChanged(object sender, EventArgs e)
-        {
-            if (WindowState == WindowState.Minimized)
-            {
-                Hide();
-                ShowInTaskbar = true;
-            }
-        }
-
-        private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
-        {
-            // optional: save settings or log
         }
 
         private void ThemeToggleButton_Click(object sender, RoutedEventArgs e)
@@ -59,34 +72,14 @@ namespace FinTrack
 
         private void ApplyTheme(string themePath)
         {
-            var dict = new ResourceDictionary
-            {
-                Source = new Uri(themePath, UriKind.Relative)
-            };
-            var existing = Application.Current.Resources.MergedDictionaries
-                .FirstOrDefault(d => d.Source != null && d.Source.OriginalString.Contains("Theme"));
+            var dict = new ResourceDictionary { Source = new Uri(themePath, UriKind.Relative) };
+            var existing = Application.Current.Resources.MergedDictionaries.FirstOrDefault(d => d.Source != null && d.Source.OriginalString.Contains("Theme"));
+
             if (existing != null)
-                Application.Current.Resources.MergedDictionaries.Remove(existing);
-            Application.Current.Resources.MergedDictionaries.Add(dict);
-        }
-
-        private void UserControl_Loaded(object sender, RoutedEventArgs e)
-        {
-            // nothing to do here any more
-        }
-
-        private async void Menu_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is Button button && button.Tag is string tag)
             {
-                SectionTitle.Text = tag;
-                MainContentPanel.Content = CreatePanelByKey(tag);
-
-                if (tag == "Messages")
-                {
-                    await _messagesPanel.LoadMessagesIfConfiguredAsync();
-                }
+                Application.Current.Resources.MergedDictionaries.Remove(existing);
             }
+            Application.Current.Resources.MergedDictionaries.Add(dict);
         }
 
         private UserControl CreatePanelByKey(string tag) => tag switch
@@ -102,5 +95,24 @@ namespace FinTrack
             "Marketing" => new MarketingPanel(),
             _ => new DashboardPanel()
         };
+
+        #region Window State Handlers
+        protected override void OnStateChanged(EventArgs e)
+        {
+            if (WindowState == WindowState.Minimized) Hide();
+            base.OnStateChanged(e);
+        }
+
+        private void MainWindow_StateChanged(object sender, EventArgs e)
+        {
+            if (WindowState == WindowState.Minimized)
+            {
+                Hide();
+                ShowInTaskbar = true;
+            }
+        }
+
+        private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e) { }
+        #endregion
     }
 }
