@@ -176,27 +176,6 @@
                                HorizontalAlignment="Center"/>
                 </StackPanel>
             </Border>
-
-            <Border Background="{DynamicResource PanelBackgroundBrush}"
-        CornerRadius="10"
-        Padding="15"
-        Margin="5">
-                <StackPanel>
-                    <TextBlock Text="Incoming"
-                   FontWeight="Bold"
-                   FontSize="16"
-                   Foreground="{DynamicResource TextBrush}"/>
-                    <TextBlock Text="Unread emails"
-                   FontSize="14"
-                   Margin="0,5,0,10"
-                   Foreground="{DynamicResource SubTextBrush}"/>
-                    <TextBlock Text="{Binding UnreadCount}"
-                   FontSize="32"
-                   FontWeight="SemiBold"
-                   Foreground="{DynamicResource AccentBrush}"
-                   HorizontalAlignment="Center"/>
-                </StackPanel>
-            </Border>
         </UniformGrid>
     </Grid>
 </UserControl>
