@@ -234,7 +234,7 @@
 
                                 <!-- Шаг 3 -->
                                 <TextBlock Margin="5,10,0,0" Foreground="{DynamicResource TextBrush}">
-            3. Создайте пароль приложения:
+            3. Создайте 2 пароля приложения:
                                 </TextBlock>
                                 <Button Content="Открыть пароли приложений"
                 Click="OpenAppPasswords_Click"
@@ -245,7 +245,7 @@
 
                                 <TextBlock TextWrapping="Wrap" FontStyle="Italic"
                    Foreground="{DynamicResource TextBrush}">
-            Используйте созданный пароль вместо обычного пароля Gmail в полях выше.
+            Используйте созданные пароли вместо обычного пароля Gmail в полях выше.
                                 </TextBlock>
                             </StackPanel>
                         </Expander>

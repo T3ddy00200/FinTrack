@@ -31,16 +31,35 @@ namespace FinTrack
         {
             if (WindowState == WindowState.Minimized)
             {
-                Hide();
+                //Hide();
             }
             base.OnStateChanged(e);
+        }
+
+        public void OpenDebtorsPanel()
+        {
+            SectionTitle.Text = "Debtors";
+            MainContentPanel.Content = CreatePanelByKey("Debtors");
+        }
+
+        public void OpenInvoicesPanel()
+        {
+            SectionTitle.Text = "Invoices";
+            MainContentPanel.Content = CreatePanelByKey("Invoices");
+        }
+
+        public async void OpenMessagesPanel()
+        {
+            SectionTitle.Text = "Messages";
+            MainContentPanel.Content = _messagesPanel;
+            await _messagesPanel.LoadMessagesIfConfiguredAsync();
         }
 
         private void MainWindow_StateChanged(object sender, EventArgs e)
         {
             if (WindowState == WindowState.Minimized)
             {
-                Hide();
+                //Hide();
                 ShowInTaskbar = true;
             }
         }

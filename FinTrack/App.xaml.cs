@@ -49,6 +49,14 @@ namespace decoder
             };
             MainWindow.Show();
 
+            MainWindow.StateChanged += (s, args) =>
+            {
+                if (MainWindow.WindowState == WindowState.Minimized)
+                {
+                    MainWindow.ShowInTaskbar = true;
+                }
+            };
+
             SetBrowserFeatureControl();
         }
 
@@ -81,6 +89,39 @@ namespace decoder
             if (MainWindow == null)
                 MainWindow = new MainWindow();
 
+            MainWindow.ShowInTaskbar = true;
+            MainWindow.Show();
+            MainWindow.WindowState = WindowState.Normal;
+            MainWindow.Activate();
+        }
+
+        public void Tray_OpenDebtors_Click(object sender, RoutedEventArgs e)
+        {
+            ShowMainWindow();
+            if (MainWindow is MainWindow mw)
+                mw.OpenDebtorsPanel();
+        }
+
+        public void Tray_OpenInvoices_Click(object sender, RoutedEventArgs e)
+        {
+            ShowMainWindow();
+            if (MainWindow is MainWindow mw)
+                mw.OpenInvoicesPanel();
+        }
+
+        public void Tray_OpenMessages_Click(object sender, RoutedEventArgs e)
+        {
+            ShowMainWindow();
+            if (MainWindow is MainWindow mw)
+                mw.OpenMessagesPanel();
+        }
+
+        private void ShowMainWindow()
+        {
+            if (MainWindow == null)
+                MainWindow = new MainWindow();
+
+            MainWindow.ShowInTaskbar = true;
             MainWindow.Show();
             MainWindow.WindowState = WindowState.Normal;
             MainWindow.Activate();
