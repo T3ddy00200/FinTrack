@@ -9,6 +9,8 @@ using Xceed.Wpf.Toolkit;            // для TimePicker и MessageBox
 using FinTrack.Controls;
 using FinTrack.Models;
 using FinTrack.Services;
+using MessageBox = System.Windows.MessageBox;
+using System.Diagnostics;
 
 namespace FinTrack.Pages
 {
@@ -85,6 +87,11 @@ namespace FinTrack.Pages
                         //LocalizationManager.SetCulture(appCfg.Language);
                         //LocalizationManager.LocalizeUI(Application.Current.MainWindow);
                     }
+                    if (appCfg != null)
+                    {
+                        SystemPromptTextBox.Text = appCfg.SystemPrompt ?? "";
+                    }
+
                 }
                 catch { /* лог */ }
             }
@@ -116,7 +123,27 @@ namespace FinTrack.Pages
                 }
                 catch { /* лог */ }
             }
+
+            if (File.Exists(configPath))
+            {
+                try
+                {
+                    var json = File.ReadAllText(configPath);
+                    var appCfg = JsonSerializer.Deserialize<AppSettings>(json);
+                    if (appCfg != null)
+                    {
+                        SystemPromptTextBox.Text = appCfg.SystemPrompt ?? "";
+                        AIApiKeyBox.Password = appCfg.AIApiKey ?? "";
+                        MaxTokensBox.Text = appCfg.MaxTokens.ToString();
+                        TemperatureBox.Text = appCfg.Temperature.ToString("0.0");
+                    }
+                }
+                catch { /* лог */ }
+            }
+
+
         }
+
 
         private void SaveAutoNotificationText_Click(object sender, RoutedEventArgs e)
         {
@@ -148,6 +175,33 @@ namespace FinTrack.Pages
 
             Xceed.Wpf.Toolkit.MessageBox.Show("Настройки авторассылки сохранены.", "Готово",
                 MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private void OpenImapSettings_Click(object sender, RoutedEventArgs e)
+        {
+            System.Diagnostics.Process.Start(new ProcessStartInfo
+            {
+                FileName = "https://mail.google.com/mail/u/0/#settings/fwdandpop",
+                UseShellExecute = true
+            });
+        }
+
+        private void OpenSecuritySettings_Click(object sender, RoutedEventArgs e)
+        {
+            System.Diagnostics.Process.Start(new ProcessStartInfo
+            {
+                FileName = "https://myaccount.google.com/security",
+                UseShellExecute = true
+            });
+        }
+
+        private void OpenAppPasswords_Click(object sender, RoutedEventArgs e)
+        {
+            System.Diagnostics.Process.Start(new ProcessStartInfo
+            {
+                FileName = "https://myaccount.google.com/apppasswords",
+                UseShellExecute = true
+            });
         }
 
         private void InsertNameTag_Auto_Click(object sender, RoutedEventArgs e)
@@ -205,10 +259,45 @@ namespace FinTrack.Pages
                 MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
+
+        private void SaveSystemPrompt_Click(object sender, RoutedEventArgs e)
+        {
+            string prompt = SystemPromptTextBox.Text.Trim();
+            string apiKey = AIApiKeyBox.Password.Trim();
+            int.TryParse(MaxTokensBox.Text.Trim(), out int tokens);
+            double.TryParse(TemperatureBox.Text.Trim(), out double temperature);
+
+            if (string.IsNullOrWhiteSpace(prompt))
+            {
+                MessageBox.Show("Введите системный промпт.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var appCfg = new AppSettings
+            {
+                Language = "he",
+                SystemPrompt = prompt,
+                AIApiKey = apiKey,
+                MaxTokens = tokens <= 0 ? 1024 : tokens,
+                Temperature = temperature <= 0 ? 1.0 : temperature
+            };
+
+            Directory.CreateDirectory(Path.GetDirectoryName(configPath)!);
+            File.WriteAllText(configPath, JsonSerializer.Serialize(appCfg, new JsonSerializerOptions { WriteIndented = true }));
+
+            MessageBox.Show("Настройки AI сохранены. Перезапустите приложение для применения.", "Готово",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+        }
         private class AppSettings
         {
-            public string Language { get; set; } = "ru";
+            public string Language { get; set; } = "he";
+            public string SystemPrompt { get; set; } = "";
+            public string AIApiKey { get; set; } = "";
+            public int MaxTokens { get; set; } = 1024;
+            public double Temperature { get; set; } = 1.0;
         }
+
+
     }
 
     public class AutoSendSettings

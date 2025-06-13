@@ -4,7 +4,6 @@ using System.Windows;
 using System.Windows.Controls;
 using FinTrack.Controls;
 using FinTrack.Pages;
-using FinTrack.Services;
 
 namespace FinTrack
 {
@@ -12,7 +11,6 @@ namespace FinTrack
     {
         private readonly MessagesPanel _messagesPanel = new MessagesPanel();
         private bool isDarkTheme = true;
-        private System.Windows.Threading.DispatcherTimer autoSendTimer;
 
         public MainWindow()
         {
@@ -27,9 +25,7 @@ namespace FinTrack
 
             if (startPage == "Messages")
                 _ = _messagesPanel.LoadMessagesIfConfiguredAsync();
-
         }
-
 
         protected override void OnStateChanged(EventArgs e)
         {
@@ -83,7 +79,6 @@ namespace FinTrack
         {
             if (sender is Button button && button.Tag is string tag)
             {
-                // Tag now holds "Home", "Debtors", etc.
                 SectionTitle.Text = tag;
                 MainContentPanel.Content = CreatePanelByKey(tag);
 
@@ -104,9 +99,8 @@ namespace FinTrack
             "Security" => new SecurityPanel(),
             "Settings" => new SettingsPanel(),
             "Users" => new UsersPanel(),
-            "Marketing" => new MarketingPanel(),    // ← вот она!
+            "Marketing" => new MarketingPanel(),
             _ => new DashboardPanel()
         };
-
     }
 }

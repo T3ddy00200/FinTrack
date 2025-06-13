@@ -25,7 +25,7 @@ namespace FinTrack.Controls
 
     public partial class MessagesPanel : UserControl
     {
-        private readonly ChatGptService _chatGpt = new ChatGptService();
+        private ChatGptService? _chatGpt; // nullable — будет создан только если есть настройки
 
         private ObservableCollection<EmailMessage> allMessages = new();
         private readonly string debtorFilePath = Path.Combine(
@@ -53,13 +53,34 @@ namespace FinTrack.Controls
 
         private DispatcherTimer refreshTimer;
         private readonly ChatGptService _chat = new ChatGptService();
+
+        private void ReplaceMessages(IEnumerable<EmailMessage> messages)
+        {
+            allMessages.Clear();
+            foreach (var m in messages)
+                allMessages.Add(m);
+        }
+
         public MessagesPanel()
         {
             InitializeComponent();
+
             Loaded += async (_, _) =>
             {
                 if (_isInitialized) return;
                 _isInitialized = true;
+
+                try
+                {
+                    _chatGpt = new ChatGptService();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("❌ Ошибка инициализации ChatGPT: " + ex.Message,
+                        "Ошибка конфигурации", MessageBoxButton.OK, MessageBoxImage.Error);
+                    StatusTextBlock.Text = "⚠️ OpenAI не настроен.";
+                    return;
+                }
 
                 LoadSenderData();
                 LoadDebtors();
@@ -74,6 +95,7 @@ namespace FinTrack.Controls
                 };
                 refreshTimer.Start();
             };
+
             this.IsVisibleChanged += (s, e) =>
             {
                 if ((bool)e.NewValue)  // если панель стала видимой
@@ -83,28 +105,41 @@ namespace FinTrack.Controls
                 }
             };
         }
+
         private async void SuggestReply_Click(object sender, RoutedEventArgs e)
         {
-            if (MessagesListBox.SelectedItem is EmailMessage msg)
+            if (MessagesListBox.SelectedItem is not EmailMessage msg)
             {
-                StatusTextBlock.Text = "🤖 Generating suggestion…";
-
-                // Получаем текущий язык UI ("ru", "en" и т.п.)
-                var lang = Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName;
-
-                // Генерируем уведомление по просроченным должникам на этом языке
-                var notificationText = await _chatGpt.GenerateOverdueNotificationAsync(lang);
-
-                // Отображаем его в поле ответа
-                ReplyTextBox.Text = notificationText;
-                StatusTextBlock.Text = "✅ Suggestion ready";
-            }
-            else
-            {
-                MessageBox.Show("Please select a message first.", "No selection",
+                MessageBox.Show("Пожалуйста, выберите сообщение.", "Нет выбора",
                                 MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (_chatGpt == null)
+            {
+                MessageBox.Show("OpenAI не настроен. Проверьте параметры в настройках.", "Ошибка конфигурации",
+                                MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            StatusTextBlock.Text = "🤖 Генерация ответа...";
+
+            try
+            {
+                var lang = Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName;
+                var notificationText = await _chatGpt.GenerateOverdueNotificationAsync();
+
+                ReplyTextBox.Text = notificationText;
+                StatusTextBlock.Text = "✅ Ответ сгенерирован";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ошибка при обращении к OpenAI: " + ex.Message,
+                                "Ошибка генерации", MessageBoxButton.OK, MessageBoxImage.Error);
+                StatusTextBlock.Text = "❌ Ошибка генерации";
             }
         }
+
 
         public void ApplySenderSettings(string email, string sendPwd, string readPwd)
         {
@@ -112,10 +147,11 @@ namespace FinTrack.Controls
             sendPassword = sendPwd;
             readPassword = readPwd;
         }
-       private async Task LoadMessagesAsync()
+        private async Task LoadMessagesAsync()
         {
             AuditLogger.Log("LoadMessagesAsync: старт загрузки писем");
             ShowLoading(true);
+
             try
             {
                 if (string.IsNullOrWhiteSpace(senderEmail) || string.IsNullOrWhiteSpace(readPassword))
@@ -124,6 +160,7 @@ namespace FinTrack.Controls
                     AuditLogger.Log("LoadMessagesAsync: пропущено — нет данных для чтения почты");
                     return;
                 }
+
                 using var client = new ImapClient();
                 await client.ConnectAsync("imap.gmail.com", 993, SecureSocketOptions.SslOnConnect);
                 await client.AuthenticateAsync(senderEmail, readPassword);
@@ -133,40 +170,40 @@ namespace FinTrack.Controls
 
                 var sinceDate = DateTime.UtcNow.AddDays(-7);
                 var uids = await inbox.SearchAsync(SearchQuery.DeliveredAfter(sinceDate));
-                // Загружаем все summary с флагами
+
                 var allSummaries = await inbox.FetchAsync(uids,
                     MessageSummaryItems.Envelope | MessageSummaryItems.UniqueId | MessageSummaryItems.Flags);
-                // Фильтруем только НЕпрочитанные
+
                 var unreadSummaries = allSummaries
                     .Where(s => !s.Flags.HasValue || !s.Flags.Value.HasFlag(MessageFlags.Seen))
+                    .Reverse()
                     .ToList();
-                // Очищаем список перед загрузкой
-                System.Windows.Application.Current.Dispatcher.Invoke(() => allMessages.Clear());
 
-                foreach (var summary in unreadSummaries.AsEnumerable().Reverse())
+                var parsed = new List<EmailMessage>();
+
+                foreach (var summary in unreadSummaries)
                 {
                     var from = summary.Envelope?.From?.Mailboxes.FirstOrDefault()?.Address.ToLower();
                     if (!string.IsNullOrWhiteSpace(from) && knownEmails.Contains(from))
                     {
                         var full = await inbox.GetMessageAsync(summary.UniqueId);
-
                         var text = !string.IsNullOrEmpty(full.TextBody) ? full.TextBody :
                                    !string.IsNullOrEmpty(full.HtmlBody) ? full.HtmlBody : "(пусто)";
 
-                        var message = new EmailMessage
+                        parsed.Add(new EmailMessage
                         {
                             From = from,
                             Subject = full.Subject ?? "(без темы)",
                             FullBody = text,
                             Preview = text.Length > 100 ? text[..100] : text,
                             Uid = summary.UniqueId
-                        };
-                        System.Windows.Application.Current.Dispatcher.Invoke(() => allMessages.Add(message));
+                        });
                     }
                 }
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+
+                Application.Current.Dispatcher.Invoke(() =>
                 {
-                    MessagesListBox.ItemsSource = null;
+                    ReplaceMessages(parsed);
                     MessagesListBox.ItemsSource = allMessages;
                     StatusTextBlock.Text = $"✅ Найдено непрочитанных: {allMessages.Count}";
                 });
@@ -184,6 +221,7 @@ namespace FinTrack.Controls
                 AuditLogger.Log("LoadMessagesAsync: завершение загрузки писем");
             }
         }
+
         private void MessagesListBox_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
             e.Handled = true;

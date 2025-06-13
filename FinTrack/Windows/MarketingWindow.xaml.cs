@@ -24,6 +24,7 @@ namespace FinTrack.Windows
         private string _originalHtml;
         private string _bgColor = "#FFFFFF";
         private string _bgImageUrl = null;
+        private IHTMLDocument2? HtmlDoc => EditorBrowser.Document as IHTMLDocument2;
 
         public MarketingWindow()
         {
@@ -57,18 +58,11 @@ namespace FinTrack.Windows
             {
                 try
                 {
-                    var doc = EditorBrowser.Document as IHTMLDocument2;
-                    if (doc != null)
+                    if (EditorBrowser.Document is IHTMLDocument2 doc)
                     {
                         doc.designMode = "On";
-
-                        var timer = new DispatcherTimer
+                        Dispatcher.InvokeAsync(() =>
                         {
-                            Interval = TimeSpan.FromMilliseconds(150)
-                        };
-                        timer.Tick += (_, _) =>
-                        {
-                            timer.Stop();
                             try
                             {
                                 if (doc.body != null)
@@ -81,8 +75,7 @@ namespace FinTrack.Windows
                             {
                                 MessageBox.Show("Ошибка при установке HTML: " + ex.Message);
                             }
-                        };
-                        timer.Start();
+                        }, DispatcherPriority.ApplicationIdle);
                     }
                 }
                 catch (Exception ex)
@@ -94,45 +87,30 @@ namespace FinTrack.Windows
 
         // --- 4) обёртка execCommand и доступ к DOM ---
         private dynamic Document => EditorBrowser.Document;
-        private void Exec(string cmd, object value = null)
+        private void Exec(string cmd, object? value = null)
         {
             try
             {
-                var doc = EditorBrowser.Document as IHTMLDocument2;
-                doc?.execCommand(cmd, false, value);
+                HtmlDoc?.execCommand(cmd, false, value);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Ошибка команды '" + cmd + "': " + ex.Message);
+                MessageBox.Show($"Ошибка команды '{cmd}': {ex.Message}");
             }
         }
-
-
 
         // --- 5) чтение/запись body HTML ---
-        private void SetBodyHtml(string html)
-        {
-            try
-            {
-                dynamic doc = EditorBrowser.Document;
-                dynamic body = doc?.body;
-
-                if (body != null)
-                {
-                    body.innerHTML = html;
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Ошибка при установке HTML: " + ex.Message);
-            }
-        }
-
         private string GetBodyHtml()
         {
-            var doc = EditorBrowser.Document as IHTMLDocument2;
-            return doc?.body?.innerHTML ?? "";
+            return HtmlDoc?.body?.innerHTML ?? "";
         }
+
+        private void SetBodyHtml(string html)
+        {
+            if (HtmlDoc?.body != null)
+                HtmlDoc.body.innerHTML = html;
+        }
+
 
 
         // --- 6) кнопки форматирования ---
@@ -237,9 +215,28 @@ namespace FinTrack.Windows
 
             if (dialog.ShowDialog() == true)
             {
+                // Получаем email отправителя
+                string? senderEmail = GetSenderEmail();
+                if (string.IsNullOrEmpty(senderEmail))
+                {
+                    MessageBox.Show("Не удалось получить email отправителя из sender.json", "Ошибка",
+                        MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                // Кодируем все параметры
+                string encodedSender = Uri.EscapeDataString(senderEmail);
+                string token = Uri.EscapeDataString("Ldp5ywWhKXPq9LbZsGNbql9OFF5EkK0=");
+                string key = Uri.EscapeDataString("Q3erQEFGds46&Wtg");
+
+                // Формируем ссылку
+                string unsubscribeUrl = $"https://fintrack123.duckdns.org/unsubscribe/page?sender={encodedSender}&X-Encrypted-Token={token}&X-Encryption-Key={key}";
+
+                // HTML кнопки
                 string buttonHtml = $@"
 <div style=""text-align:center;margin-top:20px;margin-bottom:20px;"">
-  <a href=""https://d54c-2a01-4f8-c17-57de-00-1.ngrok-free.app/unsubscribe-click?data={{UnsubscribeToken}}""
+  <a href=""{unsubscribeUrl}""
+     target=""_blank""
      style=""display:inline-block;
             padding:12px 24px;
             background-color:{dialog.BgColor};
@@ -252,18 +249,17 @@ namespace FinTrack.Windows
   </a>
 </div>";
 
+                // Вставляем HTML в письмо
                 InsertHtml(buttonHtml);
             }
         }
+
 
         private void InsertHtml(string html)
         {
             try
             {
-                var doc = EditorBrowser.Document as IHTMLDocument2;
-                var sel = doc?.selection as IHTMLSelectionObject;
-
-                if (sel != null && sel.type == "Text")
+                if (HtmlDoc?.selection is IHTMLSelectionObject sel && sel.type == "Text")
                 {
                     var range = sel.createRange() as IHTMLTxtRange;
                     range?.pasteHTML(html);
@@ -378,6 +374,27 @@ namespace FinTrack.Windows
             DesktopView_Click(null, null);
         }
 
+        private void ResetHtmlFromEditor_Click(object sender, RoutedEventArgs e)
+        {
+            HtmlEditorBox.Text = GetBodyHtml();
+        }
+
+        private void ApplyHtmlToEditor_Click(object sender, RoutedEventArgs e)
+        {
+            var newHtml = HtmlEditorBox.Text.Trim();
+            if (!string.IsNullOrEmpty(newHtml))
+            {
+                SetBodyHtml(newHtml);
+                _originalHtml = newHtml;
+            }
+        }
+
+        private void CopyHtmlToClipboard_Click(object sender, RoutedEventArgs e)
+        {
+            Clipboard.SetText(GetBodyHtml());
+            MessageBox.Show("HTML скопирован в буфер обмена.", "Готово", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
         private void DesktopView_Click(object s, RoutedEventArgs e)
         {
             PreviewBrowser.Width = 800;
@@ -388,6 +405,33 @@ namespace FinTrack.Windows
         {
             PreviewBrowser.Width = 375;
             PreviewBrowser.NavigateToString(WrapHtml(GetBodyHtml(), _bgColor));
+        }
+
+        private string? GetSenderEmail()
+        {
+            try
+            {
+                string path = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    "FinTrack", "sender.json");
+
+                if (!File.Exists(path)) return null;
+
+                var json = File.ReadAllText(path);
+                var config = JsonSerializer.Deserialize<EmailSenderConfig>(json);
+                return config?.Email;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private class EmailSenderConfig
+        {
+            public string Email { get; set; }
+            public string Password { get; set; }
+            public string ReadPassword { get; set; }
         }
 
         // --- 12) универсальный генератор HTML-страницы ---

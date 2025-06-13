@@ -84,11 +84,11 @@
                     Click="Menu_Click"
                     Tag="Messages"/>
             <!-- в StackPanel меню -->
-            <Button x:Name="Menu_Marketing"
+            <!--<Button x:Name="Menu_Marketing"
         Style="{StaticResource MenuButtonStyle}"
         Content="Marketing"
         Click="Menu_Click"
-        Tag="Marketing"/>
+        Tag="Marketing"/>-->
 
             <Button x:Name="Menu_Security"
                     Style="{StaticResource MenuButtonStyle}"
@@ -100,11 +100,11 @@
                     Content="Settings"
                     Click="Menu_Click"
                     Tag="Settings"/>
-            <Button x:Name="Menu_Users"
+            <!--<Button x:Name="Menu_Users"
                     Style="{StaticResource MenuButtonStyle}"
                     Content="Users"
                     Click="Menu_Click"
-                    Tag="Users"/>
+                    Tag="Users"/>-->
         </StackPanel>
 
         <!-- Top bar -->
@@ -116,15 +116,15 @@
                         DockPanel.Dock="Right"
                         Margin="0,0,20,0">
                 <Button Content="🌙/☀"
-                        Width="40"
-                        Height="30"
-                        Margin="0,15,10,15"
+                        Width="50"
+                        Height="50"
+                        Margin="0,15,50,15"
                         Click="ThemeToggleButton_Click"/>
-                <TextBlock Text="Алексей"
+                <!--<TextBlock Text="Алексей"
                            Foreground="{DynamicResource TextBrush}"
                            VerticalAlignment="Center"
                            FontSize="16"
-                           Margin="10,0"/>
+                           Margin="10,0"/>-->
             </StackPanel>
             <TextBlock x:Name="SectionTitle"
                        Text="Home"

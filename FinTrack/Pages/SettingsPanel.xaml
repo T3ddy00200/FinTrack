@@ -114,7 +114,75 @@
                     </StackPanel>
                 </Expander>
 
-                <!-- Email settings -->
+                <Expander Header="AI Settings"
+          IsExpanded="False"
+          Margin="0,0,0,20"
+          Foreground="{DynamicResource TextBrush}">
+                    <StackPanel Margin="10">
+
+                        <!-- Системный промпт -->
+                        <TextBlock Text="System Prompt:"
+                   Foreground="{DynamicResource TextBrush}"/>
+                        <TextBox x:Name="SystemPromptTextBox"
+                 AcceptsReturn="True"
+                 Height="120"
+                 TextWrapping="Wrap"
+                 VerticalScrollBarVisibility="Auto"
+                 Background="{DynamicResource PanelBackgroundBrush}"
+                 Foreground="{DynamicResource TextBrush}"
+                 Margin="0,5,0,10"/>
+
+                        <!-- API-ключ -->
+                        <TextBlock Text="API Key (OpenAI / OpenRouter):"
+                   Margin="0,5,0,2"
+                   Foreground="{DynamicResource TextBrush}"/>
+                        <PasswordBox x:Name="AIApiKeyBox"
+                     Height="30"
+                     Background="{DynamicResource PanelBackgroundBrush}"
+                     Foreground="{DynamicResource TextBrush}"
+                     Margin="0,0,0,10"/>
+
+                        <!-- Максимальное количество токенов -->
+                        <TextBlock Text="Max Tokens (e.g. 2048):"
+                   Margin="0,5,0,2"
+                   Foreground="{DynamicResource TextBrush}"/>
+                        <TextBox x:Name="MaxTokensBox"
+                 Height="30"
+                 Text="1024"
+                 Background="{DynamicResource PanelBackgroundBrush}"
+                 Foreground="{DynamicResource TextBrush}"
+                 Margin="0,0,0,10"/>
+
+                        <!-- Температура -->
+                        <TextBlock Text="Temperature (0.0 - 2.0):"
+                   Margin="0,5,0,2"
+                   Foreground="{DynamicResource TextBrush}"/>
+                        <TextBox x:Name="TemperatureBox"
+                 Height="30"
+                 Text="1.0"
+                 Background="{DynamicResource PanelBackgroundBrush}"
+                 Foreground="{DynamicResource TextBrush}"
+                 Margin="0,0,0,10"/>
+
+                        <Button Content="Save Prompt Settings"
+                Click="SaveSystemPrompt_Click"
+                Width="180"
+                Height="35"
+                Background="{DynamicResource AccentBrush}"
+                Foreground="White"/>
+                    </StackPanel>
+                </Expander>
+
+
+
+                <Expander Header="Gmail Settings"
+          IsExpanded="False"
+          Margin="0,0,0,20"
+          Foreground="{DynamicResource TextBrush}">
+                    <StackPanel Margin="10">
+
+
+                        <!-- Email settings -->
                 <TextBlock Text="Sender Email:" Margin="0,0,0,2" Foreground="{DynamicResource TextBrush}"/>
                 <TextBox x:Name="SenderEmailBox"
                          Height="30" Margin="0,0,0,5"/>
@@ -133,6 +201,58 @@
                         Background="{DynamicResource AccentBrush}"
                         Foreground="White"
                         BorderBrush="{x:Null}"/>
+
+                        <Expander Header="📘 Как настроить Gmail"
+          Margin="0,10,0,0"
+          Foreground="{DynamicResource TextBrush}">
+                            <StackPanel Margin="10">
+                                <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}">
+            Чтобы настроить Gmail для отправки писем:
+                                </TextBlock>
+
+                                <!-- Шаг 1 -->
+                                <TextBlock Margin="0,10,0,0" Foreground="{DynamicResource TextBrush}">
+            1. Включите IMAP:
+                                </TextBlock>
+                                <Button Content="Открыть настройки IMAP"
+                Click="OpenImapSettings_Click"
+                Width="200"
+                Margin="0,2,0,5"
+                Background="{DynamicResource HoverBrush}"
+                Foreground="{DynamicResource TextBrush}"/>
+
+                                <!-- Шаг 2 -->
+                                <TextBlock Margin="5,10,0,0" Foreground="{DynamicResource TextBrush}">
+            2. Включите двухфакторную аутентификацию:
+                                </TextBlock>
+                                <Button Content="Открыть страницу безопасности"
+                Click="OpenSecuritySettings_Click"
+                Width="220"
+                Margin="0,2,0,5"
+                Background="{DynamicResource HoverBrush}"
+                Foreground="{DynamicResource TextBrush}"/>
+
+                                <!-- Шаг 3 -->
+                                <TextBlock Margin="5,10,0,0" Foreground="{DynamicResource TextBrush}">
+            3. Создайте пароль приложения:
+                                </TextBlock>
+                                <Button Content="Открыть пароли приложений"
+                Click="OpenAppPasswords_Click"
+                Width="220"
+                Margin="0,2,0,10"
+                Background="{DynamicResource HoverBrush}"
+                Foreground="{DynamicResource TextBrush}"/>
+
+                                <TextBlock TextWrapping="Wrap" FontStyle="Italic"
+                   Foreground="{DynamicResource TextBrush}">
+            Используйте созданный пароль вместо обычного пароля Gmail в полях выше.
+                                </TextBlock>
+                            </StackPanel>
+                        </Expander>
+                    </StackPanel>
+                </Expander>
+
+
 
             </StackPanel>
         </ScrollViewer>

@@ -4,177 +4,168 @@
              Background="{DynamicResource BackgroundBrush}"
              Loaded="UserControl_Loaded">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <Grid>
-            <StackPanel Margin="20">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-                <!-- Search box -->
-                <Grid Width="300" Margin="0,0,0,10">
-                    <TextBox x:Name="SearchBox"
-                             FontSize="14"
-                             Padding="10,5"
-                             Background="{DynamicResource PanelBackgroundBrush}"
-                             Foreground="{DynamicResource TextBrush}"
-                             BorderBrush="{DynamicResource BorderBrush}"
-                             TextChanged="SearchBox_TextChanged"/>
-                    <TextBlock Text="Search by company, email or phone..."
-                               Foreground="{DynamicResource SubTextBrush}"
-                               FontSize="13"
-                               Margin="12,5,0,0"
-                               IsHitTestVisible="False"
-                               VerticalAlignment="Top">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Visibility" Value="Collapsed"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Text, ElementName=SearchBox}" Value="">
-                                        <Setter Property="Visibility" Value="Visible"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
-                </Grid>
-
-                <!-- Buttons -->
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                    <Button Content="Add Debtor" Click="OpenAddModal_Click" Margin="5"
-                            Background="{DynamicResource AccentBrush}" Foreground="White"/>
-                    <Button Content="Delete Debtor" Click="DeleteDebtor_Click" Margin="5"
-                            Background="{DynamicResource DangerBrush}" Foreground="White"/>
-                    <Button Content="Change Status" Click="ChangeStatus_Click" Margin="5"
-                            Background="{DynamicResource HoverBrush}" Foreground="{DynamicResource TextBrush}"/>
-                    <Button Content="Import from Excel" Click="ImportFromExcel_Click" Margin="5"
-                            Background="{DynamicResource HoverBrush}" Foreground="{DynamicResource TextBrush}"/>
-                </StackPanel>
-
-                <!-- Selection -->
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                    <Button Content="Select All" Click="SelectAll_Click"
-                            Width="150" Margin="0,0,10,0" Height="32"
-                            Background="{DynamicResource HoverBrush}"
-                            Foreground="{DynamicResource TextBrush}"
-                            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"/>
-                    <ToggleButton x:Name="MultiSelectToggle" Content="Multi-Select"
-                                  Width="180" Height="32" FontWeight="SemiBold" IsChecked="False"
-                                  Background="{DynamicResource HoverBrush}"
-                                  Foreground="{DynamicResource TextBrush}"
-                                  BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
-                                  Cursor="Hand">
-                        <ToggleButton.Style>
-                            <Style TargetType="ToggleButton" BasedOn="{StaticResource {x:Type ToggleButton}}">
-                                <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}"/>
-                                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
-                                <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
-                                <Style.Triggers>
-                                    <Trigger Property="IsChecked" Value="True">
-                                        <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
-                                        <Setter Property="Foreground" Value="White"/>
-                                        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
-                                    </Trigger>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="{DynamicResource HoverBrush}"/>
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </ToggleButton.Style>
-                    </ToggleButton>
-                </StackPanel>
-
-                <!-- Data grid -->
-                <DataGrid x:Name="DebtorsGrid"
-                          IsReadOnly="True"
-                          EnableRowVirtualization="True"
-                          EnableColumnVirtualization="True"
-                          VirtualizingPanel.IsVirtualizing="True"
-                          VirtualizingPanel.VirtualizationMode="Recycling"
-                          PreviewMouseLeftButtonDown="DebtorsGrid_PreviewMouseLeftButtonDown"
-                          PreviewMouseWheel="DebtorsGrid_PreviewMouseWheel"
-                          ScrollViewer.VerticalScrollBarVisibility="Disabled"
-                          ScrollViewer.CanContentScroll="False"
-                          SelectionMode="Extended"
-                          SelectionUnit="FullRow"
-                          AutoGenerateColumns="False"
-                          CanUserReorderColumns="False"
-                          CanUserAddRows="False"
-                          CanUserSortColumns="False"
-                          Background="{DynamicResource PanelBackgroundBrush}"
-                          Foreground="{DynamicResource TextBrush}"
-                          BorderBrush="{DynamicResource BorderBrush}"
-                          HeadersVisibility="Column"
-                          RowBackground="{DynamicResource BackgroundBrush}"
-                          AlternatingRowBackground="{DynamicResource PanelBackgroundBrush}"
-                          GridLinesVisibility="None"
-                          Margin="0,10,0,0">
-
-                    <DataGrid.Resources>
-                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="{DynamicResource AccentColor}" />
-                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="White"/>
-                    </DataGrid.Resources>
-
-                    <DataGrid.ColumnHeaderStyle>
-                        <Style TargetType="DataGridColumnHeader">
-                            <Setter Property="Background" Value="{DynamicResource HoverBrush}"/>
-                            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
-                            <Setter Property="FontWeight" Value="Bold"/>
-                            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
-                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <!-- Верхняя часть: поиск + кнопки -->
+        <StackPanel Grid.Row="0" Margin="20">
+            <!-- Поиск -->
+            <Grid Width="300" Margin="0,0,0,10">
+                <TextBox x:Name="SearchBox"
+                         FontSize="14"
+                         Padding="10,5"
+                         Background="{DynamicResource PanelBackgroundBrush}"
+                         Foreground="{DynamicResource TextBrush}"
+                         BorderBrush="{DynamicResource BorderBrush}"
+                         TextChanged="SearchBox_TextChanged"/>
+                <TextBlock Text="Search by company, email or phone..."
+                           Foreground="{DynamicResource SubTextBrush}"
+                           FontSize="13"
+                           Margin="12,5,0,0"
+                           IsHitTestVisible="False"
+                           VerticalAlignment="Top">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Text, ElementName=SearchBox}" Value="">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
                         </Style>
-                    </DataGrid.ColumnHeaderStyle>
+                    </TextBlock.Style>
+                </TextBlock>
+            </Grid>
 
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Company"         Binding="{Binding Name}"              Width="*"/>
-                        <DataGridTextColumn Header="Contact Name"    Binding="{Binding ContactName}"      Width="*"/>
-                        <DataGridTextColumn Header="Email"           Binding="{Binding Email}"            Width="*"/>
-                        <DataGridTextColumn Header="Phone"           Binding="{Binding Phone}"            Width="*"/>
-                        <DataGridTextColumn Header="Total Debt"      Binding="{Binding TotalDebt, StringFormat=N2}" Width="*"/>
-                        <DataGridTextColumn Header="Paid"            Binding="{Binding Paid, StringFormat=N2}"     Width="*"/>
-                        <DataGridTextColumn Header="Balance"         Binding="{Binding Balance, StringFormat=N2}"  Width="*"/>
-                        <DataGridTextColumn Header="Payment Status"  Binding="{Binding PaymentStatus}"   Width="*"/>
-                        <DataGridTextColumn Header="Due Date"        Binding="{Binding DueDate, StringFormat=d}"   Width="*"/>
-                    </DataGrid.Columns>
-                </DataGrid>
+            <!-- Кнопки -->
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <Button Content="Add Debtor" Click="OpenAddModal_Click" Margin="5"
+                        Background="{DynamicResource AccentBrush}" Foreground="White"/>
+                <Button Content="Delete Debtor" Click="DeleteDebtor_Click" Margin="5"
+                        Background="{DynamicResource DangerBrush}" Foreground="White"/>
+                <Button Content="Change Status" Click="ChangeStatus_Click" Margin="5"
+                        Background="{DynamicResource HoverBrush}" Foreground="{DynamicResource TextBrush}"/>
+                <Button Content="Change Email" Click="ChangeEmail_Click" Margin="5"
+                        Background="{DynamicResource HoverBrush}" Foreground="{DynamicResource TextBrush}"/>
+                <Button Content="Import from Excel" Click="ImportFromExcel_Click" Margin="5"
+                        Background="{DynamicResource HoverBrush}" Foreground="{DynamicResource TextBrush}"/>
+                <Button Content="💾 Сохранить должников"
+                        Background="{DynamicResource HoverBrush}" Foreground="{DynamicResource TextBrush}" Margin="5" Padding="10,5" Click="ManualSave_Click"/>
+                <Button Content="🔄 Загрузить должников"
+                        Background="{DynamicResource HoverBrush}" Foreground="{DynamicResource TextBrush}" Margin="5" Padding="10,5" Click="ManualLoad_Click"/>
             </StackPanel>
 
-            <!-- Add/Edit modal -->
-            <Border x:Name="AddDebtorModal"
-                    Background="{DynamicResource PanelBackgroundBrush}"
-                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
-                    CornerRadius="6" Padding="20" Visibility="Collapsed" Width="400"
-                    VerticalAlignment="Center" HorizontalAlignment="Center">
-                <StackPanel>
-                    <TextBlock Text="Add Debtor"
-                               Foreground="{DynamicResource TextBrush}" FontSize="18"
-                               Margin="0,0,0,10"/>
-                    <TextBlock Text="Company Name" Foreground="{DynamicResource TextBrush}"/>
-                    <TextBox x:Name="CompanyInput" Margin="0,5"/>
-                    <TextBlock Text="Contact Name" Foreground="{DynamicResource TextBrush}"/>
-                    <TextBox x:Name="ContactNameInput" Margin="0,5"/>
-                    <TextBlock Text="Email" Foreground="{DynamicResource TextBrush}"/>
-                    <TextBox x:Name="EmailInput" Margin="0,5"/>
-                    <TextBlock Text="Phone" Foreground="{DynamicResource TextBrush}"/>
-                    <TextBox x:Name="PhoneInput" Margin="0,5"/>
-                    <TextBlock Text="Total Debt" Foreground="{DynamicResource TextBrush}"/>
-                    <TextBox x:Name="DebtInput" Margin="0,5"/>
-                    <TextBlock Text="Due Date" Foreground="{DynamicResource TextBrush}"/>
-                    <DatePicker x:Name="DueDateInput" Margin="0,5"/>
-                    <TextBlock Text="Invoice (optional)" Foreground="{DynamicResource TextBrush}"/>
-                    <Button Content="Select PDF Invoice" Click="SelectInvoiceFromModal_Click" Margin="0,5"/>
-                    <TextBlock x:Name="InvoiceFileNameText" FontSize="12"
-                               Foreground="{DynamicResource SubTextBrush}" Margin="0,0,0,5"/>
-                    <Button Content="Clear Invoice" Click="ClearInvoice_Click"
-                            Background="{DynamicResource DangerBrush}" Foreground="White"
-                            Margin="0,5" Width="150"/>
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
-                        <Button Content="Save" Click="SaveDebtor_Click"
-                                Background="{DynamicResource AccentBrush}" Foreground="White"
-                                Width="120" Margin="0,0,10,0"/>
-                        <Button Content="Cancel" Click="CancelDebtor_Click"
-                                Background="{DynamicResource HoverBrush}" Foreground="White"
-                                Width="100"/>
-                    </StackPanel>
+            <!-- Выбор -->
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <Button Content="Select All" Click="SelectAll_Click"
+                        Width="150" Margin="0,0,10,0" Height="32"
+                        Background="{DynamicResource HoverBrush}"
+                        Foreground="{DynamicResource TextBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"/>
+                <ToggleButton x:Name="MultiSelectToggle" Content="Multi-Select"
+                              Width="180" Height="32" FontWeight="SemiBold"
+                              Background="{DynamicResource HoverBrush}"
+                              Foreground="{DynamicResource TextBrush}"
+                              BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"/>
+
+                
+
+            </StackPanel>
+        </StackPanel>
+
+        <!-- Таблица без внешнего ScrollViewer -->
+        <DataGrid x:Name="DebtorsGrid"
+                  Grid.Row="1"
+                  IsReadOnly="True"
+                  AutoGenerateColumns="False"
+                  SelectionMode="Extended"
+                  SelectionUnit="FullRow"
+                  EnableRowVirtualization="True"
+                  EnableColumnVirtualization="True"
+                  ScrollViewer.CanContentScroll="True"
+                  VirtualizingPanel.IsVirtualizing="True"
+                  VirtualizingPanel.VirtualizationMode="Recycling"
+                  Background="{DynamicResource PanelBackgroundBrush}"
+                  Foreground="{DynamicResource TextBrush}"
+                  BorderBrush="{DynamicResource BorderBrush}"
+                  HeadersVisibility="Column"
+                  RowBackground="{DynamicResource BackgroundBrush}"
+                  AlternatingRowBackground="{DynamicResource PanelBackgroundBrush}"
+                  GridLinesVisibility="None"
+                  PreviewMouseLeftButtonDown="DebtorsGrid_PreviewMouseLeftButtonDown"
+                  PreviewMouseWheel="DebtorsGrid_PreviewMouseWheel"
+                  Margin="20,0,20,20">
+
+            <DataGrid.Resources>
+                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="{DynamicResource AccentColor}" />
+                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="White"/>
+            </DataGrid.Resources>
+
+            <DataGrid.ColumnHeaderStyle>
+                <Style TargetType="DataGridColumnHeader">
+                    <Setter Property="Background" Value="{DynamicResource HoverBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                </Style>
+            </DataGrid.ColumnHeaderStyle>
+
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Company"         Binding="{Binding Name}"              Width="*" />
+                <DataGridTextColumn Header="Contact Name"    Binding="{Binding ContactName}"      Width="*" />
+                <DataGridTextColumn Header="Email"           Binding="{Binding Email}"            Width="*" />
+                <DataGridTextColumn Header="Invoice №"       Binding="{Binding Phone}"            Width="*" />
+                <DataGridTextColumn Header="Total Debt"      Binding="{Binding TotalDebt, StringFormat=N2}" Width="*" />
+                <DataGridTextColumn Header="Paid"            Binding="{Binding Paid, StringFormat=N2}"     Width="*" />
+                <DataGridTextColumn Header="Balance"         Binding="{Binding Balance, StringFormat=N2}"  Width="*" />
+                <DataGridTextColumn Header="Payment Status"  Binding="{Binding PaymentStatus}"   Width="*" />
+                <DataGridTextColumn Header="Due Date"        Binding="{Binding DueDate, StringFormat=d}"   Width="*" />
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Модальное окно добавления -->
+        <Border x:Name="AddDebtorModal"
+                Background="{DynamicResource PanelBackgroundBrush}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                CornerRadius="6" Padding="20" Visibility="Collapsed" Width="400"
+                VerticalAlignment="Center" HorizontalAlignment="Center"
+                Panel.ZIndex="99">
+            <StackPanel>
+                <TextBlock Text="Add Debtor"
+                           Foreground="{DynamicResource TextBrush}" FontSize="18"
+                           Margin="0,0,0,10"/>
+                <TextBlock Text="Company Name" Foreground="{DynamicResource TextBrush}"/>
+                <TextBox x:Name="CompanyInput" Margin="0,5"/>
+                <TextBlock Text="Contact Name" Foreground="{DynamicResource TextBrush}"/>
+                <TextBox x:Name="ContactNameInput" Margin="0,5"/>
+                <TextBlock Text="Email" Foreground="{DynamicResource TextBrush}"/>
+                <TextBox x:Name="EmailInput" Margin="0,5"/>
+                <TextBlock Text="Phone" Foreground="{DynamicResource TextBrush}"/>
+                <TextBox x:Name="PhoneInput" Margin="0,5"/>
+                <TextBlock Text="Total Debt" Foreground="{DynamicResource TextBrush}"/>
+                <TextBox x:Name="DebtInput" Margin="0,5"/>
+                <TextBlock Text="Due Date" Foreground="{DynamicResource TextBrush}"/>
+                <DatePicker x:Name="DueDateInput" Margin="0,5"/>
+                <TextBlock Text="Invoice (optional)" Foreground="{DynamicResource TextBrush}"/>
+                <Button Content="Select PDF Invoice" Click="SelectInvoiceFromModal_Click" Margin="0,5"/>
+                <TextBlock x:Name="InvoiceFileNameText" FontSize="12"
+                           Foreground="{DynamicResource SubTextBrush}" Margin="0,0,0,5"/>
+                <Button Content="Clear Invoice" Click="ClearInvoice_Click"
+                        Background="{DynamicResource DangerBrush}" Foreground="White"
+                        Margin="0,5" Width="150"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                    <Button Content="Save" Click="SaveDebtor_Click"
+                            Background="{DynamicResource AccentBrush}" Foreground="White"
+                            Width="120" Margin="0,0,10,0"/>
+                    <Button Content="Cancel" Click="CancelDebtor_Click"
+                            Background="{DynamicResource HoverBrush}" Foreground="White"
+                            Width="100"/>
                 </StackPanel>
-            </Border>
-        </Grid>
-    </ScrollViewer>
+            </StackPanel>
+        </Border>
+    </Grid>
 </UserControl>

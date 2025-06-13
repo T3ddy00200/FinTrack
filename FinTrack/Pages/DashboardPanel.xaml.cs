@@ -49,6 +49,9 @@ namespace FinTrack.Controls
         public int PartialCount { get; private set; }
         public int PaidCount { get; private set; }
 
+        private static DateTime? _lastOverdueNotificationDate = null;
+
+
         // Новые срочные договора
         public int UrgentCount { get; private set; }
         public ObservableCollection<string> UrgentNames { get; private set; }
@@ -129,7 +132,10 @@ namespace FinTrack.Controls
                     var json = File.ReadAllText(debtorFilePath);
                     _debtors = JsonSerializer.Deserialize<List<Debtor>>(json) ?? new List<Debtor>();
                 }
-                else _debtors = new List<Debtor>();
+                else
+                {
+                    _debtors = new List<Debtor>();
+                }
             }
             catch (Exception ex)
             {
@@ -146,12 +152,32 @@ namespace FinTrack.Controls
 
             PaymentStatusSeries = new SeriesCollection
     {
-        new PieSeries { Title="Paid",    Values=new ChartValues<int>{PaidCount},    DataLabels=true },
-        new PieSeries { Title="Unpaid", Values=new ChartValues<int>{UnpaidCount},  DataLabels=true },
-        new PieSeries { Title="Partial",    Values=new ChartValues<int>{PartialCount}, DataLabels=true }
+        new PieSeries { Title = "Paid",    Values = new ChartValues<int> { PaidCount },    DataLabels = true },
+        new PieSeries { Title = "Unpaid",  Values = new ChartValues<int> { UnpaidCount },  DataLabels = true },
+        new PieSeries { Title = "Partial", Values = new ChartValues<int> { PartialCount }, DataLabels = true }
     };
 
             var today = DateTime.Today;
+
+            // Найдём всех, кто не оплатил и у кого просрочка > 10 дней
+            var overdue = _debtors
+                .Where(d => d.PaymentStatus != "Оплачено" && (today - d.DueDate.Date).Days > 10)
+                .ToList();
+
+            //if (overdue.Count > 0 && _lastOverdueNotificationDate != today)
+            //{
+            //    _lastOverdueNotificationDate = today;
+
+            //    int minOverdueDays = overdue.Min(d => (today - d.DueDate.Date).Days);
+
+            //    MessageBox.Show(
+            //        $"⚠ Обнаружено {overdue.Count} клиентов с просрочкой более 10 дней.\n" +
+            //        $"Минимальное количество дней просрочки: {minOverdueDays}",
+            //        "Просроченные задолженности",
+            //        MessageBoxButton.OK,
+            //        MessageBoxImage.Warning);
+            //}
+
             var urgentList = _debtors
                 .Where(d =>
                 {

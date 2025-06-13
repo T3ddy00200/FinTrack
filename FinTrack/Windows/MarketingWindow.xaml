@@ -162,6 +162,7 @@
             <TabItem Header="Edit">
                 <WebBrowser x:Name="EditorBrowser" Margin="5"/>
             </TabItem>
+
             <TabItem Header="Preview">
                 <Grid>
                     <Grid.RowDefinitions>
@@ -170,18 +171,50 @@
                     </Grid.RowDefinitions>
                     <WebBrowser x:Name="PreviewBrowser" Grid.Row="0"/>
                     <StackPanel Grid.Row="1"
-                                Orientation="Horizontal"
-                                HorizontalAlignment="Center"
-                                Margin="0,5">
-                        <Button Content="Desktop View"
-                                Click="DesktopView_Click"
-                                Margin="5"/>
-                        <Button Content="Mobile View"
-                                Click="MobileView_Click"
-                                Margin="5"/>
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Center"
+                        Margin="0,5">
+                        <Button Content="Desktop View" Click="DesktopView_Click" Margin="5"/>
+                        <Button Content="Mobile View" Click="MobileView_Click" Margin="5"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
+
+            <!-- Новая вкладка HTML -->
+            <TabItem Header="HTML">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <!-- текстовая область растёт -->
+                        <RowDefinition Height="Auto"/>
+                        <!-- кнопки фиксированы -->
+                    </Grid.RowDefinitions>
+
+                    <TextBox x:Name="HtmlEditorBox"
+                 Grid.Row="0"
+                 FontFamily="Consolas"
+                 FontSize="13"
+                 AcceptsReturn="True"
+                 AcceptsTab="True"
+                 VerticalScrollBarVisibility="Auto"
+                 HorizontalScrollBarVisibility="Auto"
+                 TextWrapping="NoWrap"
+                 Margin="5"/>
+
+                    <StackPanel Orientation="Horizontal"
+                    Grid.Row="1"
+                    HorizontalAlignment="Right"
+                    Margin="5">
+                        <Button Content="⟳ Сбросить из визуального редактора"
+                    Click="ResetHtmlFromEditor_Click"
+                    Margin="5"/>
+                        <Button Content="✔ Применить в редактор"
+                    Click="ApplyHtmlToEditor_Click"
+                    Margin="5"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
         </TabControl>
 
     </DockPanel>

@@ -1,35 +1,46 @@
-﻿using Hardcodet.Wpf.TaskbarNotification;
+﻿using FinTrack;
+using Hardcodet.Wpf.TaskbarNotification;
+using Microsoft.Win32;
+using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Security.Cryptography;
+using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
-using FinTrack.Services;    // для AutoNotifier
-using Microsoft.Win32;
 
-namespace FinTrack
+namespace decoder
 {
     public partial class App : Application
     {
+        private static Mutex _mutex;
         private TaskbarIcon? _trayIcon;
         private DispatcherTimer autoSendTimer;
 
         protected override void OnStartup(StartupEventArgs e)
         {
-        
+            bool createdNew;
+            _mutex = new Mutex(true, "FinTrackSingletonMutex", out createdNew);
+            if (!createdNew)
+            {
+                MessageBox.Show("Приложение уже запущено.", "FinTrack", MessageBoxButton.OK, MessageBoxImage.Information);
+                Shutdown();
+                return;
+            }
 
             base.OnStartup(e);
 
-            // 1) Инициализируем трей-иконку из XAML-ресурса
             InitTrayIcon();
 
-            // 2) Таймер автоотправки
             autoSendTimer = new DispatcherTimer { Interval = TimeSpan.FromMinutes(1) };
             autoSendTimer.Tick += async (_, _) =>
             {
-                await AutoNotifier.TryAutoSend();
+                await FinTrack.Services.AutoNotifier.TryAutoSend();
             };
             autoSendTimer.Start();
 
-            // 3) Показ главного окна
             MainWindow = new MainWindow();
             MainWindow.Closing += (s, args) =>
             {
@@ -37,6 +48,7 @@ namespace FinTrack
                 MainWindow.Hide();
             };
             MainWindow.Show();
+
             SetBrowserFeatureControl();
         }
 
@@ -44,28 +56,37 @@ namespace FinTrack
         {
             try
             {
-                string appName = System.IO.Path.GetFileName(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
-                Registry.SetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_BROWSER_EMULATION",
-                                  appName, 11001, RegistryValueKind.DWord);
+                string appName = System.IO.Path.GetFileName(
+                    System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
+                Registry.SetValue(
+                    @"HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_BROWSER_EMULATION",
+                    appName,
+                    11001,
+                    RegistryValueKind.DWord
+                );
             }
-            catch { /* игнор ошибок */ }
+            catch
+            {
+                // игнорируем ошибки
+            }
         }
+
         private void InitTrayIcon()
         {
-            // просто берём TaskbarIcon, описанный в App.xaml
             _trayIcon = (TaskbarIcon)FindResource("TrayIcon");
         }
 
-        // Обработчики контекстного меню (упоминаются в XAML)
-        private void Tray_Open_Click(object? sender, RoutedEventArgs e)
+        public void Tray_Open_Click(object sender, RoutedEventArgs e)
         {
-            if (MainWindow == null) MainWindow = new MainWindow();
+            if (MainWindow == null)
+                MainWindow = new MainWindow();
+
             MainWindow.Show();
             MainWindow.WindowState = WindowState.Normal;
             MainWindow.Activate();
         }
 
-        private void Tray_Exit_Click(object? sender, RoutedEventArgs e)
+        public void Tray_Exit_Click(object sender, RoutedEventArgs e)
         {
             _trayIcon?.Dispose();
             Shutdown();
@@ -73,6 +94,7 @@ namespace FinTrack
 
         protected override void OnExit(ExitEventArgs e)
         {
+            try { _mutex?.ReleaseMutex(); } catch { }
             _trayIcon?.Dispose();
             base.OnExit(e);
         }

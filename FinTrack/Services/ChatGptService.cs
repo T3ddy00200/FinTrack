@@ -8,7 +8,6 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using FinTrack.Models;
-using FinTrack.Properties;
 using FinTrack.Views;
 
 namespace FinTrack.Services
@@ -20,106 +19,171 @@ namespace FinTrack.Services
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "FinTrack", "debtors.json");
 
-        // Системное сообщение задаёт роль и мульти-язычность
-        private const string SystemPrompt = @"
-You are the FinTrack assistant.
+        private readonly string _configPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "FinTrack", "config.json");
+
+        private readonly string _model = "gpt-3.5-turbo";
+        private readonly string _systemPrompt;
+        private readonly int _maxTokens;
+        private readonly double _temperature;
+        private readonly string _apiKey;
+
+        private const string DefaultPrompt = @"
+You are FinTrack assistant.
 You have access to the full list of debtors (name, email, and outstanding balance).
-Your only task: generate notification email text for all overdue debtors.
-Always reply in the same language the user used.";
+Your task is to generate notification emails for all overdue debtors.
+Always respond in Hebrew.";
 
         public ChatGptService()
         {
-            _http = new HttpClient { BaseAddress = new Uri("https://api.openai.com/") };
-            var key = Settings.Default.OpenAiApiKey;
-            _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
+            _http = new HttpClient();
+
+            _systemPrompt = DefaultPrompt;
+            _maxTokens = 1024;
+            _temperature = 1.0;
+            _apiKey = "";
+
+            try
+            {
+                if (File.Exists(_configPath))
+                {
+                    var json = File.ReadAllText(_configPath);
+                    var cfg = JsonSerializer.Deserialize<AppSettings>(json);
+
+                    _systemPrompt = string.IsNullOrWhiteSpace(cfg?.SystemPrompt) ? DefaultPrompt : cfg.SystemPrompt;
+                    _apiKey = cfg?.AIApiKey?.Trim() ?? "";
+                    _maxTokens = cfg?.MaxTokens > 0 ? cfg.MaxTokens : 1024;
+                    _temperature = cfg?.Temperature > 0 ? cfg.Temperature : 1.0;
+                }
+
+                if (!string.IsNullOrWhiteSpace(_apiKey))
+                {
+                    _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
+                    _http.BaseAddress = new Uri("https://api.openai.com/");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("⚠️ Ошибка инициализации ChatGptService: " + ex.Message);
+            }
         }
 
-        /// <summary>
-        /// Универсальный метод: отправляет любой prompt и возвращает ответ.
-        /// </summary>
         public async Task<string> GetChatCompletionAsync(string prompt)
         {
+            if (string.IsNullOrWhiteSpace(_apiKey))
+                return "⚠️ GPT отключён: API ключ не задан.";
+
             var payload = new
             {
-                model = "gpt-3.5-turbo",
+                model = _model,
                 messages = new[]
                 {
-                    new { role = "system", content = SystemPrompt },
-                    new { role = "user",   content = prompt }
-                }
+                    new { role = "system", content = _systemPrompt },
+                    new { role = "user", content = prompt }
+                },
+                max_tokens = _maxTokens,
+                temperature = _temperature
             };
 
-            var content = new StringContent(
-                JsonSerializer.Serialize(payload),
-                Encoding.UTF8, "application/json");
+            var jsonContent = JsonSerializer.Serialize(payload);
+            var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
-            using var resp = await _http.PostAsync("v1/chat/completions", content);
-            var body = await resp.Content.ReadAsStringAsync();
-            if (!resp.IsSuccessStatusCode)
-                return $"OpenAI error {(int)resp.StatusCode}: {body}";
+            try
+            {
+                var response = await _http.PostAsync("v1/chat/completions", content);
+                var responseBody = await response.Content.ReadAsStringAsync();
 
-            using var doc = JsonDocument.Parse(body);
-            return doc.RootElement
-                      .GetProperty("choices")[0]
-                      .GetProperty("message")
-                      .GetProperty("content")
-                      .GetString()?
-                      .Trim() ?? string.Empty;
+                if (!response.IsSuccessStatusCode)
+                    return $"OpenAI error {(int)response.StatusCode}: {responseBody}";
+
+                using var doc = JsonDocument.Parse(responseBody);
+                return doc.RootElement
+                          .GetProperty("choices")[0]
+                          .GetProperty("message")
+                          .GetProperty("content")
+                          .GetString()?
+                          .Trim() ?? string.Empty;
+            }
+            catch (Exception ex)
+            {
+                return $"❌ Ошибка при обращении к OpenAI: {ex.Message}";
+            }
         }
 
-        /// <summary>
-        /// Специализированный метод: формирует список просроченных должников
-        /// и запрашивает у модели текст письма-уведомления на их основе.
-        /// </summary>
-        public async Task<string> GenerateOverdueNotificationAsync(string userLanguageCode)
+        public async Task<string> GenerateOverdueNotificationAsync()
         {
-            // 1) читаем должников
             List<Debtor> debtors;
+
             try
             {
                 var json = await File.ReadAllTextAsync(_debtorsPath);
-                debtors = JsonSerializer.Deserialize<List<Debtor>>(json)
-                          ?? new List<Debtor>();
+                debtors = JsonSerializer.Deserialize<List<Debtor>>(json) ?? new List<Debtor>();
             }
             catch
             {
-                debtors = new List<Debtor>();
+                return "שגיאה בקריאת רשימת החייבים.";
             }
 
-            // 2) фильтруем просроченные
             var overdue = debtors
                 .Where(d => d.Balance > 0 && d.DueDate < DateTime.Today)
                 .ToList();
 
             if (overdue.Count == 0)
-            {
-                return userLanguageCode.StartsWith("ru")
-                    ? "Нет просроченных должников."
-                    : "There are no overdue debtors.";
-            }
+                return "אין חייבים בפיגור.";
 
-            // 3) строим пользовательский промпт
+            var grouped = overdue
+                .GroupBy(d => d.Email)
+                .Select(g => new
+                {
+                    Email = g.Key,
+                    Name = g.First().Name,
+                    Debts = g.Select(d => new
+                    {
+                        Amount = d.Balance,
+                        DueDate = d.DueDate.ToString("yyyy-MM-dd")
+                    }).ToList()
+                }).ToList();
+
             var sb = new StringBuilder();
-            sb.AppendLine(userLanguageCode.StartsWith("ru")
-                ? "Список просроченных должников:"
-                : "List of overdue debtors:");
-            foreach (var d in overdue)
+            sb.AppendLine("הנה רשימת החייבים בפיגור, מפורקת לפי אימייל. צור עבור כל אחד מהם מייל אישי עם פנייה בשמו, פירוט כל החובות (תאריך + סכום) וסיום מנומס שמבקש תשלום:");
+            sb.AppendLine("[");
+            for (int i = 0; i < grouped.Count; i++)
             {
-                var bal = d.Balance;
-                sb.AppendLine(userLanguageCode.StartsWith("ru")
-                    ? $"- {d.Name}: долг {bal:0.00}₽, email: {d.Email}"
-                    : $"- {d.Name}: debt {bal:0.00}, email: {d.Email}");
+                var d = grouped[i];
+                sb.AppendLine("  {");
+                sb.AppendLine($"    \"name\": \"{d.Name}\",");
+                sb.AppendLine($"    \"email\": \"{d.Email}\",");
+                sb.AppendLine("    \"debts\": [");
+                for (int j = 0; j < d.Debts.Count; j++)
+                {
+                    var debt = d.Debts[j];
+                    sb.AppendLine("      {");
+                    sb.AppendLine($"        \"amount\": {debt.Amount:0.00},");
+                    sb.AppendLine($"        \"dueDate\": \"{debt.DueDate}\"");
+                    sb.Append("      }");
+                    if (j < d.Debts.Count - 1) sb.AppendLine(",");
+                    else sb.AppendLine();
+                }
+                sb.AppendLine("    ]");
+                sb.Append("  }");
+                if (i < grouped.Count - 1) sb.AppendLine(",");
+                else sb.AppendLine();
             }
-
+            sb.AppendLine("]");
             sb.AppendLine();
-            sb.AppendLine(userLanguageCode.StartsWith("ru")
-                ? "Сгенерируй, пожалуйста, текст письма-уведомления для этих должников, " +
-                  "включив приветствие, обращение по имени, сумму долга и призыв к оплате."
-                : "Please generate a notification email text for these debtors, " +
-                  "including greeting, personalization by name, debt amount and a call to action.");
+            sb.AppendLine("כתוב מייל התראה אישי עבור כל אחד מהחייבים האלה. השתמש בעברית בלבד.");
 
-            // 4) отправляем промпт в OpenAI
             return await GetChatCompletionAsync(sb.ToString());
+        }
+
+        private class AppSettings
+        {
+            public string Language { get; set; } = "he";
+            public string SystemPrompt { get; set; } = "";
+            public string AIApiKey { get; set; } = "";
+            public int MaxTokens { get; set; } = 1024;
+            public double Temperature { get; set; } = 1.0;
         }
     }
 }

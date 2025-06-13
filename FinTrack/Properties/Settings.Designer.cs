@@ -49,7 +49,7 @@ namespace FinTrack.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("https://<your-resource-name>.openai.azure.com/")]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://api.openai.com/\n")]
         public string OpenAiEndpoint {
             get {
                 return ((string)(this["OpenAiEndpoint"]));
@@ -61,7 +61,7 @@ namespace FinTrack.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("chatgpt-deployment")]
+        [global::System.Configuration.DefaultSettingValueAttribute("gpt-3.5-turbo")]
         public string OpenAiDeploymentName {
             get {
                 return ((string)(this["OpenAiDeploymentName"]));
@@ -73,9 +73,9 @@ namespace FinTrack.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("sk-proj-xqroZNVUmMvh7iY-uxJPWEf1d5h7Fm72ki7cmjjZvov6IJk6pcEcjbeKgUe5MHylKCUDDt1Jl" +
-            "cT3BlbkFJoVq4cPttoCGExyfulxBri9M6buluF0YLK1ZFxwypabt00D3mLzgozXKqH27n6SP_uY4VGNW" +
-            "38A")]
+        [global::System.Configuration.DefaultSettingValueAttribute("sk-proj-Cv0HksERGfWtBl5AbSFkots4zOQ5qWSytFszv4s9YPADnRF__rBUvRd7t4PNTey-uItGzHMYr" +
+            "5T3BlbkFJQwXbShABI_azWfMFqdtqqVsniLRLknoQ2xhYyN6UB-D_zxeC7FdoRWkfH9rVDJgJa9ZDZr5" +
+            "H4A")]
         public string OpenAiApiKey {
             get {
                 return ((string)(this["OpenAiApiKey"]));

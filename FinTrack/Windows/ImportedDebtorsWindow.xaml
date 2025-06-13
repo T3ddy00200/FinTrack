@@ -53,9 +53,9 @@
                 <DataGridTextColumn Header="Email"
                                     Binding="{Binding Email}"
                                     Width="2*" />
-                <DataGridTextColumn Header="Phone"
-                                    Binding="{Binding Phone}"
-                                    Width="*" />
+                <DataGridTextColumn Header="Invoice №"
+                                    Binding="{Binding InvoiceNumber}"
+                                    Width="2*"/>
                 <DataGridTextColumn Header="Amount"
                                     Binding="{Binding TotalDebt, StringFormat=N2}"
                                     Width="80" />
@@ -66,24 +66,43 @@
                                     Binding="{Binding DueDate, StringFormat=d}"
                                     Width="100" />
 
-                <!-- Attach PDF button + file name -->
-                <DataGridTemplateColumn Header="Invoice" Width="120">
+                <!-- Invoice file name and manual attach button -->
+                <DataGridTemplateColumn Header="Invoice" Width="150">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding InvoiceFileName}"
+                                           VerticalAlignment="Center"
+                                           Foreground="{DynamicResource SubTextBrush}"
+                                           FontStyle="Italic"
+                                           TextTrimming="CharacterEllipsis"
+                                           Width="100"/>
                                 <Button Content="📎"
                                         Width="30"
                                         Height="24"
+                                        Margin="5,0,0,0"
                                         Background="{DynamicResource AccentBrush}"
                                         Foreground="{DynamicResource TextBrush}"
                                         BorderBrush="{x:Null}"
-                                        Click="AttachInvoice_Click"/>
-                                <TextBlock Text="{Binding InvoiceFileName}"
-                                           Margin="4,0,0,0"
-                                           VerticalAlignment="Center"
-                                           Foreground="{DynamicResource SubTextBrush}"
-                                           FontStyle="Italic"/>
+                                        Click="AttachInvoice_Click"
+                                        ToolTip="Выбрать PDF вручную"/>
                             </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Mark as Paid button -->
+                <DataGridTemplateColumn Header="Оплачено" Width="100">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="✅"
+                                    Width="30"
+                                    Height="24"
+                                    Background="{DynamicResource AccentBrush}"
+                                    Foreground="{DynamicResource TextBrush}"
+                                    BorderBrush="{x:Null}"
+                                    CommandParameter="{Binding}"
+                                    Click="MarkSingleAsPaid_Click"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
@@ -95,19 +114,38 @@
                     Orientation="Horizontal"
                     HorizontalAlignment="Right"
                     Margin="0,10,0,0">
+
+            <!--<Button Content="📂 Импорт из Excel"
+                    Margin="5"
+                    Padding="10,5"
+                    Click="AttachFromExcel_Click"/>-->
+
+            <Button Content="🔁 Автопривязка PDF"
+                    Margin="5"
+                    Padding="10,5"
+                    Click="AutoAttachInvoices_Click"/>
+
+            <!--<Button Content="✅ Все оплачено"
+                    Margin="5"
+                    Padding="10,5"
+                    Click="MarkAsPaid_Click"/>-->
+
             <Button Content="Confirm"
                     Width="100"
-                    Margin="0,0,10,0"
+                    Margin="10,0,0,0"
                     Background="{DynamicResource AccentBrush}"
                     Foreground="{DynamicResource TextBrush}"
                     BorderBrush="{x:Null}"
                     Click="Ok_Click"/>
+
             <Button Content="Cancel"
                     Width="80"
+                    Margin="5,0,0,0"
                     Background="{DynamicResource AccentBrush}"
                     Foreground="{DynamicResource TextBrush}"
                     BorderBrush="{x:Null}"
                     Click="Cancel_Click"/>
         </StackPanel>
+
     </Grid>
 </Window>

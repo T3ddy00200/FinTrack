@@ -5,16 +5,24 @@
              Loaded="UserControl_Loaded">
 
     <Grid Margin="20">
-        <StackPanel>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- Header + Search -->
+            <RowDefinition Height="*"/>
+            <!-- ListBox растягивается -->
+            <RowDefinition Height="Auto"/>
+            <!-- Buttons -->
+        </Grid.RowDefinitions>
 
-            <!-- Header -->
+        <!-- Header + Search -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,10">
+
             <TextBlock Text="Export Reports"
                        FontSize="22"
                        FontWeight="Bold"
                        Foreground="{DynamicResource TextBrush}"
                        Margin="0,0,0,20"/>
 
-            <!-- Search box with watermark -->
             <Grid Width="300" Margin="0,0,0,10">
                 <TextBox x:Name="SearchBox"
                          FontSize="14"
@@ -42,21 +50,26 @@
                     </TextBlock.Style>
                 </TextBlock>
             </Grid>
+        </StackPanel>
 
-            <!-- Companies list -->
-            <ListBox x:Name="CompaniesListBox"
-                     Height="150"
-                     SelectionMode="Extended"
-                     Background="{DynamicResource PanelBackgroundBrush}"
-                     Foreground="{DynamicResource TextBrush}"
-                     BorderBrush="{DynamicResource HighlightBrush}"
-                     FontSize="18"
-                     Margin="0,10"/>
+        <!-- Растягиваемый ListBox -->
+        <ListBox x:Name="CompaniesListBox"
+                 Grid.Row="1"
+                 SelectionMode="Extended"
+                 Background="{DynamicResource PanelBackgroundBrush}"
+                 Foreground="{DynamicResource TextBrush}"
+                 BorderBrush="{DynamicResource HighlightBrush}"
+                 FontSize="18"
+                 VerticalAlignment="Stretch"
+                 BorderThickness="1"
+                 Margin="0,0,0,10"/>
 
-            <!-- Select all -->
+        <!-- Кнопки и действия -->
+        <StackPanel Grid.Row="2">
+
             <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
-                <TextBlock Text="Select companies:" 
-                           Foreground="{DynamicResource TextBrush}" 
+                <TextBlock Text="Select companies:"
+                           Foreground="{DynamicResource TextBrush}"
                            VerticalAlignment="Center"/>
                 <Button Content="Select All"
                         Click="SelectAllCompanies_Click"
@@ -66,21 +79,12 @@
                         Padding="10,2"/>
             </StackPanel>
 
-            <!-- Export buttons -->
             <StackPanel Orientation="Horizontal" Margin="0,20,0,0">
                 <Button Content="Export to Excel"
                         Click="ExportToExcel_Click"
-                        Margin="0,0,10,0"
                         FontSize="18"
                         Padding="10,5"
                         Background="#2563EB"
-                        Foreground="White"/>
-
-                <Button Content="Export to PDF"
-                        Click="ExportToPdf_Click"
-                        FontSize="18"
-                        Padding="10,5"
-                        Background="#991B1B"
                         Foreground="White"/>
             </StackPanel>
 
