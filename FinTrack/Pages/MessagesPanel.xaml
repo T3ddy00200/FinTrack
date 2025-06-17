@@ -157,30 +157,55 @@
 
             <!-- Список писем -->
             <ListBox x:Name="MessagesListBox"
-                     Grid.Row="1"
-                     Background="{DynamicResource PanelBackgroundBrush}"
-                     Foreground="{DynamicResource TextBrush}"
-                     BorderBrush="{DynamicResource BorderBrush}"
-                     BorderThickness="1"
-                     PreviewMouseWheel="MessagesListBox_PreviewMouseWheel">
+         Grid.Row="1"
+         Background="{DynamicResource PanelBackgroundBrush}"
+         Foreground="{DynamicResource TextBrush}"
+         BorderBrush="{DynamicResource BorderBrush}"
+         BorderThickness="1"
+         PreviewMouseWheel="MessagesListBox_PreviewMouseWheel">
+
+                <ListBox.GroupStyle>
+                    <GroupStyle>
+                        <GroupStyle.HeaderTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Margin="0,10,0,5">
+                                    <TextBlock Text="{Binding Name}" 
+                                   FontSize="16" 
+                                   FontWeight="Bold" 
+                                   Foreground="{DynamicResource AccentBrush}"/>
+                                    <TextBlock Text=" ("
+                                   FontSize="16"
+                                   Foreground="{DynamicResource SubTextBrush}"/>
+                                    <TextBlock Text="{Binding ItemCount}" 
+                                   FontSize="16"
+                                   FontWeight="Bold"
+                                   Foreground="{DynamicResource SubTextBrush}"/>
+                                    <TextBlock Text=" писем)"
+                                   FontSize="16"
+                                   Foreground="{DynamicResource SubTextBrush}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </GroupStyle.HeaderTemplate>
+                    </GroupStyle>
+                </ListBox.GroupStyle>
+
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <Border Padding="10"
-                                BorderBrush="{DynamicResource BorderBrush}"
-                                BorderThickness="0,0,0,1">
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="0,0,0,1">
                             <StackPanel>
                                 <TextBlock Text="{Binding Subject}" FontWeight="Bold"/>
-                                <TextBlock Text="{Binding From}"
-                                           FontSize="12"
-                                           Foreground="{DynamicResource SubTextBrush}"/>
                                 <TextBlock Text="{Binding Preview}"
-                                           FontSize="12"
-                                           TextTrimming="CharacterEllipsis"/>
+                               FontSize="12"
+                               TextTrimming="CharacterEllipsis"
+                               Foreground="{DynamicResource SubTextBrush}"/>
                             </StackPanel>
                         </Border>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
+
 
             <!-- Suggest + текст ответа -->
             <StackPanel Grid.Row="2" Margin="0,20,0,10" HorizontalAlignment="Center">

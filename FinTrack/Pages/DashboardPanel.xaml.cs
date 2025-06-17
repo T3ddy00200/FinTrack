@@ -122,6 +122,7 @@ namespace FinTrack.Controls
             await LoadUnreadCountAsync(debtorEmails);
         }
 
+
         // 3) Вынесенная логика чтения должников и расчёта метрик (без сети)
         private void LoadDebtorsAndMetrics()
         {
@@ -211,11 +212,13 @@ namespace FinTrack.Controls
             {
                 var count = await Task.Run(() =>
                 {
+                    if (!File.Exists(senderConfigPath)) return 0;
                     var cfg = JsonSerializer.Deserialize<EmailSenderConfig>(
                         File.ReadAllText(senderConfigPath));
-                    if (cfg == null
-                     || string.IsNullOrWhiteSpace(cfg.Email)
-                     || string.IsNullOrWhiteSpace(cfg.ReadPassword))
+
+                    if (cfg == null ||
+                        string.IsNullOrWhiteSpace(cfg.Email) ||
+                        string.IsNullOrWhiteSpace(cfg.ReadPassword))
                         return 0;
 
                     using var client = new ImapClient();
@@ -226,22 +229,39 @@ namespace FinTrack.Controls
                     var uids = client.Inbox.Search(SearchQuery.NotSeen);
                     if (uids.Count == 0) return 0;
 
-                    var summaries = client.Inbox.Fetch(uids, MessageSummaryItems.Envelope);
-                    var localCount = summaries.Count(s =>
-                        s.Envelope?.From?.Mailboxes
-                         .Any(mb => debtorEmails.Contains(mb.Address.ToLower())) == true);
+                    var summaries = client.Inbox.Fetch(uids, MessageSummaryItems.Envelope | MessageSummaryItems.UniqueId);
+
+                    var seenUids = new HashSet<UniqueId>();
+                    var seenFrom = new HashSet<string>();
+
+                    foreach (var s in summaries)
+                    {
+                        if (!s.UniqueId.IsValid || s.Envelope?.From == null)
+                            continue;
+
+                        var from = s.Envelope.From.Mailboxes.FirstOrDefault()?.Address?.ToLower();
+                        if (string.IsNullOrWhiteSpace(from)) continue;
+
+                        // Только если в базе и ещё не считали от него
+                        if (debtorEmails.Contains(from) && !seenUids.Contains(s.UniqueId))
+                        {
+                            seenUids.Add(s.UniqueId);
+                        }
+                    }
 
                     client.Disconnect(true);
-                    return localCount;
+                    return seenUids.Count;
                 });
 
                 UnreadCount = count;
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine("‼ LoadUnreadCountAsync Error: " + ex.Message);
                 UnreadCount = 0;
             }
         }
+
 
         // 4) Получение списка email-ов должников
         private HashSet<string> GetDebtorEmails()
@@ -321,67 +341,9 @@ namespace FinTrack.Controls
             OnPropertyChanged(nameof(NextAutoSend));
             OnPropertyChanged(nameof(UrgentCount));
             OnPropertyChanged(nameof(UrgentNames));
-            var debtorEmails = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            if (File.Exists(debtorFilePath))
-            {
-                var json = File.ReadAllText(debtorFilePath);
-                var debtors = JsonSerializer.Deserialize<List<Debtor>>(json) ?? new();
-                foreach (var d in debtors)
-                    if (!string.IsNullOrWhiteSpace(d.Email))
-                        debtorEmails.Add(d.Email.Trim().ToLower());
-            }
-
-            // Считаем только письма от должников
-            LoadUnreadCountFromDebtors(debtorEmails);
-
         }
 
-        private void LoadUnreadCountFromDebtors(HashSet<string> debtorEmails)
-        {
-            try
-            {
-                // сначала сбросим
-                UnreadCount = 0;
-
-                // читаем логин/пароль для чтения почты
-                if (!File.Exists(senderConfigPath)) return;
-                var cfg = JsonSerializer.Deserialize<EmailSenderConfig>(
-                    File.ReadAllText(senderConfigPath));
-                if (cfg == null ||
-                    string.IsNullOrWhiteSpace(cfg.Email) ||
-                    string.IsNullOrWhiteSpace(cfg.ReadPassword))
-                    return;
-
-                using var client = new ImapClient();
-                client.Connect("imap.gmail.com", 993, SecureSocketOptions.SslOnConnect);
-                client.Authenticate(cfg.Email, cfg.ReadPassword);
-                client.Inbox.Open(FolderAccess.ReadOnly);
-
-                // получаем все непрочитанные
-                var uids = client.Inbox.Search(SearchQuery.NotSeen);
-
-                if (uids.Count > 0)
-                {
-                    // берём только заголовки (Envelope)
-                    var summaries = client.Inbox.Fetch(uids,
-                        MessageSummaryItems.Envelope);
-
-                    // фильтруем по адресу отправителя
-                    var count = summaries.Count(s =>
-                        s.Envelope?.From?.Mailboxes
-                         .Any(mb => debtorEmails.Contains(mb.Address.ToLower())) == true);
-
-                    UnreadCount = count;
-                }
-
-                client.Disconnect(true);
-            }
-            catch
-            {
-                UnreadCount = 0;
-            }
-        }
-
+      
 
         // --------------- Локализация ---------------
         private void UserControl_Loaded(object sender, RoutedEventArgs e)

@@ -4,13 +4,14 @@ using System.Windows;
 using System.Windows.Controls;
 using FinTrack.Controls;
 using FinTrack.Pages;
-
+using FinTrack.Services;
 namespace FinTrack
 {
     public partial class MainWindow : Window
     {
         private readonly MessagesPanel _messagesPanel = new MessagesPanel();
         private bool isDarkTheme = true;
+
 
         public MainWindow()
         {
@@ -25,6 +26,17 @@ namespace FinTrack
 
             if (startPage == "Messages")
                 _ = _messagesPanel.LoadMessagesIfConfiguredAsync();
+
+            //MessageBox.Show(HardwareIdHelper.GetHardwareId());
+
+            //string hwid = HardwareIdHelper.GetHardwareId();
+            //string license = LicenseManager.GenerateKey(hwid);
+
+            //MessageBox.Show("🔐 License Key:\n" + license);
+
+            //bool isValid = LicenseManager.VerifyKey(hwid, license);
+            //MessageBox.Show("Valid: " + isValid);
+
         }
 
         protected override void OnStateChanged(EventArgs e)

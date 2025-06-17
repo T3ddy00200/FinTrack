@@ -18,6 +18,8 @@ using System.Windows.Input;
 using System.Collections.ObjectModel;
 using FinTrack.Services;   // <- подключаем наш сервис
 using FinTrack.Views;
+using System.ComponentModel;
+using System.Windows.Data;
 
 
 namespace FinTrack.Controls
@@ -147,6 +149,7 @@ namespace FinTrack.Controls
             sendPassword = sendPwd;
             readPassword = readPwd;
         }
+
         private async Task LoadMessagesAsync()
         {
             AuditLogger.Log("LoadMessagesAsync: старт загрузки писем");
@@ -168,47 +171,49 @@ namespace FinTrack.Controls
                 var inbox = client.Inbox;
                 await inbox.OpenAsync(FolderAccess.ReadOnly);
 
-                var sinceDate = DateTime.UtcNow.AddDays(-7);
-                var uids = await inbox.SearchAsync(SearchQuery.DeliveredAfter(sinceDate));
+                // Используем SearchQuery.DeliveredAfter + NotSeen
+                var sinceDate = DateTime.UtcNow.AddDays(-30);
+                var uids = await inbox.SearchAsync(SearchQuery.DeliveredAfter(sinceDate).And(SearchQuery.NotSeen));
 
                 var allSummaries = await inbox.FetchAsync(uids,
                     MessageSummaryItems.Envelope | MessageSummaryItems.UniqueId | MessageSummaryItems.Flags);
 
-                var unreadSummaries = allSummaries
-                    .Where(s => !s.Flags.HasValue || !s.Flags.Value.HasFlag(MessageFlags.Seen))
-                    .Reverse()
-                    .ToList();
-
                 var parsed = new List<EmailMessage>();
 
-                foreach (var summary in unreadSummaries)
+                foreach (var summary in allSummaries)
                 {
-                    var from = summary.Envelope?.From?.Mailboxes.FirstOrDefault()?.Address.ToLower();
-                    if (!string.IsNullOrWhiteSpace(from) && knownEmails.Contains(from))
-                    {
-                        var full = await inbox.GetMessageAsync(summary.UniqueId);
-                        var text = !string.IsNullOrEmpty(full.TextBody) ? full.TextBody :
-                                   !string.IsNullOrEmpty(full.HtmlBody) ? full.HtmlBody : "(пусто)";
+                    var from = summary.Envelope?.From?.Mailboxes.FirstOrDefault()?.Address?.ToLower();
+                    if (string.IsNullOrWhiteSpace(from) || !knownEmails.Contains(from))
+                        continue;
 
-                        parsed.Add(new EmailMessage
-                        {
-                            From = from,
-                            Subject = full.Subject ?? "(без темы)",
-                            FullBody = text,
-                            Preview = text.Length > 100 ? text[..100] : text,
-                            Uid = summary.UniqueId
-                        });
-                    }
+                    var full = await inbox.GetMessageAsync(summary.UniqueId);
+
+                    var text = !string.IsNullOrEmpty(full.TextBody) ? full.TextBody :
+                               !string.IsNullOrEmpty(full.HtmlBody) ? full.HtmlBody : "(пусто)";
+
+                    parsed.Add(new EmailMessage
+                    {
+                        From = from,
+                        Subject = full.Subject ?? "(без темы)",
+                        FullBody = text,
+                        Preview = text.Length > 100 ? text[..100] : text,
+                        Uid = summary.UniqueId
+                    });
                 }
 
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     ReplaceMessages(parsed);
-                    MessagesListBox.ItemsSource = allMessages;
-                    StatusTextBlock.Text = $"✅ Найдено непрочитанных: {allMessages.Count}";
+
+                    // создаём представление и группируем по полю From
+                    var grouped = new ListCollectionView(allMessages);
+                    grouped.GroupDescriptions.Add(new PropertyGroupDescription("From"));
+                    MessagesListBox.ItemsSource = grouped;
+
+                    StatusTextBlock.Text = $"✅ Найдено сообщений: {allMessages.Count}";
                 });
 
-                AuditLogger.Log($"LoadMessagesAsync: успешно загружено {allMessages.Count} непрочитанных писем");
+                AuditLogger.Log($"LoadMessagesAsync: успешно загружено {allMessages.Count} писем");
             }
             catch (Exception ex)
             {
@@ -221,6 +226,7 @@ namespace FinTrack.Controls
                 AuditLogger.Log("LoadMessagesAsync: завершение загрузки писем");
             }
         }
+
 
         private void MessagesListBox_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {

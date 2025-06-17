@@ -156,7 +156,7 @@
             </Border>
 
             <!-- Card 6: Incoming unread emails -->
-            <Border Background="{DynamicResource PanelBackgroundBrush}"
+            <!--<Border Background="{DynamicResource PanelBackgroundBrush}"
                     CornerRadius="10"
                     Padding="15"
                     Margin="5">
@@ -175,7 +175,7 @@
                                Foreground="{DynamicResource AccentBrush}"
                                HorizontalAlignment="Center"/>
                 </StackPanel>
-            </Border>
+            </Border>-->
         </UniformGrid>
     </Grid>
 </UserControl>
